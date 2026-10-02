@@ -92,7 +92,7 @@
         >
           <span
             class="absolute top-0.5 left-0.5 size-3.5 rounded-full bg-white shadow-sm transition-transform"
-            [class.translate-x-3.5]="autostart.state().enabled"
+            [class]="autostart.state().enabled ? 'translate-x-3.5' : 'translate-x-0'"
           ></span>
         </button>
         {{ i18n.t('footer.autostart') }}

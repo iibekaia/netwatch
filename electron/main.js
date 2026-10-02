@@ -1,22 +1,22 @@
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const { app, BrowserWindow, dialog, ipcMain, Menu, Notification, powerMonitor, shell } = require('electron');
-const { ConnectionMonitor } = require('./connection-monitor');
+const {app, BrowserWindow, dialog, ipcMain, Menu, Notification, powerMonitor, shell} = require('electron');
+const {ConnectionMonitor} = require('./connection-monitor');
 const lanScanner = require('./lan-scanner');
-const { PeerDiscovery } = require('./peer-discovery');
-const { SpeedTest, providerInfo } = require('./speed-test');
-const { Updater } = require('./updater');
-const { runDiagnostics } = require('./diagnostics');
-const { HistoryStore } = require('./history-store');
-const { queryHistory } = require('./history-stats');
+const {PeerDiscovery} = require('./peer-discovery');
+const {SpeedTest, providerInfo} = require('./speed-test');
+const {Updater} = require('./updater');
+const {runDiagnostics} = require('./diagnostics');
+const {HistoryStore} = require('./history-store');
+const {queryHistory} = require('./history-stats');
 const historyExport = require('./history-export');
 const autostart = require('./autostart');
-const { AppTray } = require('./tray');
-const { Settings } = require('./settings');
-const { openDatabase } = require('./db');
-const { SpeedStore } = require('./speed-store');
-const { i18n, SUPPORTED, LOCALES } = require('./i18n');
+const {AppTray} = require('./tray');
+const {Settings} = require('./settings');
+const {openDatabase} = require('./db');
+const {SpeedStore} = require('./speed-store');
+const {i18n, SUPPORTED, LOCALES} = require('./i18n');
 
 // ერთი ასლი: NetWatch-ს თუ ხელახლა გაუშვებენ (ან ავტომატურ ჩართვასთან ერთად) —
 // მეორე არ იხსნება, პირველის ფანჯარა ჩნდება
@@ -34,7 +34,7 @@ const DEV_URL = 'http://localhost:4200';
 const PROD_INDEX = path.join(__dirname, '..', 'dist', 'netwatch', 'browser', 'index.html');
 
 const monitor = new ConnectionMonitor();
-const peers = new PeerDiscovery({ version: app.getVersion() });
+const peers = new PeerDiscovery({version: app.getVersion()});
 const speedTest = new SpeedTest();
 const updater = new Updater();
 updater.on('state', (state) => {
@@ -79,7 +79,7 @@ function handleOffline(status, prev) {
     if (prev.online === null) return;
     if (v && v.level !== 'ok') {
       notify(
-        i18n.t('notify.offlineCause', { cause: i18n.t(`diag.verdict.${v.code}.title`) }),
+        i18n.t('notify.offlineCause', {cause: i18n.t(`diag.verdict.${v.code}.title`)}),
         i18n.t(`diag.verdict.${v.code}.advice`)
       );
     } else {
@@ -91,7 +91,7 @@ function handleOffline(status, prev) {
 function handleOnline(status, prev) {
   console.log(`[netwatch] ✅ ინტერნეტი ჩაირთო (${status.latencyMs} ms)`);
   if (prev.online === false) {
-    notify(i18n.t('notify.online'), i18n.t('notify.onlineBody', { time: i18n.duration(status.since - prev.since) }));
+    notify(i18n.t('notify.online'), i18n.t('notify.onlineBody', {time: i18n.duration(status.since - prev.since)}));
   }
   win?.flashFrame(false);
   history.endOutage(status.since);
@@ -106,7 +106,7 @@ function handleOnline(status, prev) {
 //  დიაგნოსტიკა — „სად არის პრობლემა?“
 // ─────────────────────────────────────────────
 
-const diag = { running: false, trigger: null, result: null };
+const diag = {running: false, trigger: null, result: null};
 let diagRunning = null;
 
 function sendDiag() {
@@ -167,10 +167,10 @@ function lanState() {
   const peerList = peers.list();
   const byIp = new Map();
   for (const p of peerList) for (const ip of p.addresses) if (!byIp.has(ip)) byIp.set(ip, p);
-  const devices = (lanScan?.devices ?? []).map((d) => ({ ...d, peer: byIp.get(d.ip) ?? null }));
+  const devices = (lanScan?.devices ?? []).map((d) => ({...d, peer: byIp.get(d.ip) ?? null}));
   // NetWatch-მა უპასუხა, მაგრამ სკანირებაში არ ჩანს (მაგ. სხვა subnet-იდან)
   for (const p of peerList) {
-    if (!devices.some((d) => d.peer?.id === p.id)) devices.push({ ip: p.ip, mac: null, peer: p });
+    if (!devices.some((d) => d.peer?.id === p.id)) devices.push({ip: p.ip, mac: null, peer: p});
   }
   return {
     scanning: !!lanScanning,
@@ -189,7 +189,7 @@ function sendLan() {
 function scanLan() {
   if (lanScanning) return lanScanning;
   lanScanning = lanScanner
-    .scan({ onProbe: (ip) => peers.probe(ip) })
+    .scan({onProbe: (ip) => peers.probe(ip)})
     .then((result) => (lanScan = result))
     .catch((err) => console.warn('[lan] scan failed', err))
     .finally(() => {
@@ -213,7 +213,7 @@ let providerLoading = null;
 
 function loadProvider() {
   providerLoading ??= providerInfo()
-    .then((info) => (provider = { ...info, at: Date.now() }))
+    .then((info) => (provider = {...info, at: Date.now()}))
     .catch((err) => console.warn('[isp] failed', err.message))
     .finally(() => {
       providerLoading = null;
@@ -228,7 +228,7 @@ speedTest.on('progress', (p) => {
 
 function notify(title, body) {
   if (!Notification.isSupported()) return;
-  const n = new Notification({ title, body });
+  const n = new Notification({title, body});
   n.on('click', () => showWindow()); // შეტყობინებაზე დაკლიკება ხსნის აპს (თუნდაც tray-შია)
   n.show();
 }
@@ -256,9 +256,9 @@ ipcMain.handle('speed:run', async () => {
   try {
     const result = await speedTest.run();
     speedStore.add(result);
-    return { ok: true, result };
+    return {ok: true, result};
   } catch (err) {
-    return { ok: false, error: speedTest.running ? 'busy' : String(err?.message ?? err) };
+    return {ok: false, error: speedTest.running ? 'busy' : String(err?.message ?? err)};
   }
 });
 ipcMain.on('speed:cancel', () => speedTest.cancel());
@@ -281,7 +281,7 @@ ipcMain.on('devtools:toggle', () => win?.webContents.toggleDevTools());
 ipcMain.on('i18n:initial', (event) => {
   event.returnValue = {
     lang: i18n.lang,
-    languages: SUPPORTED.map((code) => ({ code, name: LOCALES[code].meta.native })),
+    languages: SUPPORTED.map((code) => ({code, name: LOCALES[code].meta.native})),
   };
 });
 ipcMain.handle('i18n:set', (_e, lang) => {
@@ -295,14 +295,14 @@ function updateWindowTitle() {
   win.setTitle(online === null ? 'NetWatch' : i18n.t(online ? 'window.online' : 'window.offline'));
 }
 
-ipcMain.handle('autostart:get', () => ({ supported: autostart.supported(), enabled: autostart.isEnabled() }));
+ipcMain.handle('autostart:get', () => ({supported: autostart.supported(), enabled: autostart.isEnabled()}));
 ipcMain.handle('autostart:set', (_e, enabled) => setAutostart(enabled));
 
 /** ავტომატური ჩართვა — UI-დან და tray-ის მენიუდან ერთი გზით, რომ ორივე სინქრონში იყოს */
 function setAutostart(enabled) {
   autostart.setEnabled(!!enabled);
   tray?.refresh();
-  const state = { supported: autostart.supported(), enabled: autostart.isEnabled() };
+  const state = {supported: autostart.supported(), enabled: autostart.isEnabled()};
   if (win && !win.isDestroyed()) win.webContents.send('autostart:update', state);
   return state;
 }
@@ -320,7 +320,7 @@ function showWindow() {
   win.focus();
 }
 
-function createWindow({ show = true } = {}) {
+function createWindow({show = true} = {}) {
   win = new BrowserWindow({
     width: 520,
     height: 720,
@@ -357,16 +357,16 @@ function createWindow({ show = true } = {}) {
   // მარჯვენა ღილაკი → "Inspect Element"
   win.webContents.on('context-menu', (_event, params) => {
     Menu.buildFromTemplate([
-      { label: 'Inspect Element', click: () => win.webContents.inspectElement(params.x, params.y) },
-      { label: 'Toggle DevTools', click: () => win.webContents.toggleDevTools() },
-      { type: 'separator' },
-      { label: 'Reload', role: 'reload' },
-    ]).popup({ window: win });
+      // { label: 'Inspect Element', click: () => win.webContents.inspectElement(params.x, params.y) },
+      // { label: 'Toggle DevTools', click: () => win.webContents.toggleDevTools() },
+      // { type: 'separator' },
+      {label: 'Reload', role: 'reload'},
+    ]).popup({window: win});
   });
 
   if (isDev) {
     win.loadURL(DEV_URL);
-    win.webContents.openDevTools({ mode: 'detach' });
+    win.webContents.openDevTools({mode: 'detach'});
   } else {
     win.loadFile(PROD_INDEX);
   }
@@ -390,23 +390,23 @@ function createWindow({ show = true } = {}) {
 function buildMenu() {
   Menu.setApplicationMenu(
     Menu.buildFromTemplate([
-      ...(process.platform === 'darwin' ? [{ role: 'appMenu' }] : []),
+      ...(process.platform === 'darwin' ? [{role: 'appMenu'}] : []),
       {
         label: 'View',
         submenu: [
-          { role: 'reload' },
-          { role: 'forceReload' },
-          { role: 'toggleDevTools', accelerator: 'CmdOrCtrl+Shift+I' },
-          { type: 'separator' },
-          { role: 'resetZoom' },
-          { role: 'zoomIn' },
-          { role: 'zoomOut' },
+          {role: 'reload'},
+          {role: 'forceReload'},
+          {role: 'toggleDevTools', accelerator: 'CmdOrCtrl+Shift+I'},
+          {type: 'separator'},
+          {role: 'resetZoom'},
+          {role: 'zoomIn'},
+          {role: 'zoomOut'},
         ],
       },
       {
         label: 'Network',
         submenu: [
-          { label: 'Check now', accelerator: 'CmdOrCtrl+K', click: () => monitor.checkNow('menu') },
+          {label: 'Check now', accelerator: 'CmdOrCtrl+K', click: () => monitor.checkNow('menu')},
         ],
       },
     ])
@@ -432,7 +432,7 @@ app.whenReady().then(() => {
 
   history.start(); // მონიტორამდე — რომ საწყისი "ოფლაინ"-იც ჩაიწეროს
   buildMenu();
-  createWindow({ show: !autostart.launchedHidden() });
+  createWindow({show: !autostart.launchedHidden()});
   tray = new AppTray({
     autostart,
     onOpen: () => showWindow(),
@@ -467,6 +467,7 @@ app.on('window-all-closed', () => {
 app.on('will-quit', shutdown);
 
 let shutDown = false;
+
 function shutdown() {
   if (shutDown || !isPrimary) return;
   shutDown = true;
@@ -483,27 +484,27 @@ function shutdown() {
 //  ისტორიის ექსპორტი — CSV / PDF
 // ─────────────────────────────────────────────
 
-async function exportHistory({ format, from, to, periodLabel }) {
-  const report = queryHistory(history.snapshot({ from, to }), { from, to });
+async function exportHistory({format, from, to, periodLabel}) {
+  const report = queryHistory(history.snapshot({from, to}), {from, to});
   const stamp = historyExport.dateTime(Date.now()).slice(0, 10);
-  const { canceled, filePath } = await dialog.showSaveDialog(win, {
+  const {canceled, filePath} = await dialog.showSaveDialog(win, {
     title: i18n.t(format === 'pdf' ? 'dialog.savePdf' : 'dialog.saveCsv'),
     defaultPath: path.join(app.getPath('documents'), `netwatch-${format === 'pdf' ? 'report' : 'outages'}-${stamp}.${format}`),
-    filters: [format === 'pdf' ? { name: 'PDF', extensions: ['pdf'] } : { name: 'CSV', extensions: ['csv'] }],
+    filters: [format === 'pdf' ? {name: 'PDF', extensions: ['pdf']} : {name: 'CSV', extensions: ['csv']}],
   });
-  if (canceled || !filePath) return { ok: false, canceled: true };
+  if (canceled || !filePath) return {ok: false, canceled: true};
 
   try {
     if (format === 'pdf') {
-      const meta = { isp: provider?.isp, ip: provider?.ip, host: os.hostname(), periodLabel };
+      const meta = {isp: provider?.isp, ip: provider?.ip, host: os.hostname(), periodLabel};
       fs.writeFileSync(filePath, await historyExport.toPdf(report, meta));
     } else {
       fs.writeFileSync(filePath, historyExport.toCsv(report), 'utf8');
     }
     shell.showItemInFolder(filePath);
-    return { ok: true, path: filePath };
+    return {ok: true, path: filePath};
   } catch (err) {
     console.warn('[history] export failed', err);
-    return { ok: false, error: String(err?.message ?? err) };
+    return {ok: false, error: String(err?.message ?? err)};
   }
 }
