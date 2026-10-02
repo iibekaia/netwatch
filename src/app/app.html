@@ -53,7 +53,14 @@
 
   <!-- ქსელი და სიჩქარე მხოლოდ Electron-შია (ბრაუზერში — მხოლოდ კავშირი) -->
   @if (lan.available) {
-    <app-tab-nav [(active)]="tab" />
+    <!-- sticky: გვერდის სქროლვისას ტაბები ზემოთ რჩება. ფონი და blur — რომ ქვემოდან ამოსული
+         შიგთავსი ტაბებს არ გადაეფაროს; ქვედა ხაზი მხოლოდ მაშინ, როცა გვერდი ჩამოსქროლილია -->
+    <div
+      class="sticky top-0 z-20 -mx-5 -my-2 bg-bg/85 px-5 py-2 backdrop-blur-md transition-shadow"
+      [class.shadow-[0_1px_0_var(--border)]]="scrolled()"
+    >
+      <app-tab-nav [(active)]="tab" />
+    </div>
   }
 
   @switch (tab()) {

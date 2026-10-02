@@ -32,6 +32,9 @@ export class App {
   protected readonly tab = signal<AppTab>(window.netwatch ? 'speed' : 'status');
   protected readonly versions = window.netwatch?.versions;
 
+  /** გვერდი ჩამოსქროლილია — sticky ტაბებს ქვედა ხაზი უჩნდება */
+  protected readonly scrolled = signal(window.scrollY > 0);
+
   /** header-ის პატარა ინდიკატორი */
   protected readonly statusText = computed(() => {
     const online = this.conn.online();
@@ -61,7 +64,11 @@ export class App {
       );
     });
 
+    const onScroll = () => this.scrolled.set(window.scrollY > 0);
+    window.addEventListener('scroll', onScroll, { passive: true });
+
     inject(DestroyRef).onDestroy(() => {
+      window.removeEventListener('scroll', onScroll);
       offOffline();
       offOnline();
     });
