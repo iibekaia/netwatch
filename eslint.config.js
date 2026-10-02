@@ -36,7 +36,7 @@ module.exports = tseslint.config(
   },
   {
     // Electron-ის main process და სკრიპტები — Node, CommonJS (require / module.exports)
-    files: ['electron/**/*.js', 'scripts/**/*.js', 'eslint.config.js'],
+    files: ['electron/**/*.js', 'scripts/**/*.js', 'test/**/*.js', 'eslint.config.js'],
     extends: [eslint.configs.recommended],
     languageOptions: {
       ecmaVersion: 2023,

@@ -200,4 +200,5 @@ async function withTimeout(promise) {
   }
 }
 
-module.exports = { runDiagnostics, codeFor };
+// verdict — ტესტებისთვისაც (test/diagnostics.test.js): ყველა სცენარი რეალური ქსელის გარეშე
+module.exports = { runDiagnostics, codeFor, verdict };

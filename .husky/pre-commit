@@ -1,2 +1,6 @@
-# commit-მდე: ESLint მხოლოდ შეცვლილ (staged) ფაილებზე — შეცდომისას commit არ შესრულდება
+# commit-მდე:
+#  1. ESLint — მხოლოდ შეცვლილ (staged) ფაილებზე
+#  2. ტესტები (test/*.test.js, ~2 წამი)
+# რომელიმე თუ ჩავარდა — commit არ შესრულდება
 npx lint-staged
+npm test

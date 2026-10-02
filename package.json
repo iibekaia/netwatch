@@ -1,13 +1,13 @@
 {
   "name": "netwatch",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "scripts": {
     "ng": "ng",
     "start": "ng build && electron .",
     "dev": "concurrently -k -n ng,electron -c magenta,cyan \"ng serve --port 4200\" \"wait-on tcp:127.0.0.1:4200 && electron . --dev\"",
     "electron": "electron .",
     "build": "ng build",
-    "test": "ng test",
+    "test": "node scripts/test.js",
     "dist": "ng build && electron-builder --publish never",
     "dist:win": "ng build && electron-builder --win --publish never",
     "dist:mac": "ng build && electron-builder --mac --publish never",
