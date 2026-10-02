@@ -3,6 +3,7 @@ const dns = require('dns').promises;
 const fs = require('fs').promises;
 const os = require('os');
 const { execFile } = require('child_process');
+const { vendorOf } = require('./vendor');
 
 /**
  * ლოკალური ქსელის სკანერი (main process).
@@ -91,6 +92,7 @@ async function scan({ onProbe } = {}) {
       else d.hostname = await reverseDns(d.ip);
       d.gateway = d.ip === gateway;
       d.randomMac = isRandomMac(d.mac);
+      d.vendor = vendorOf(d.mac); // Apple, Samsung, TP-Link … (ოფლაინ ბაზა)
     })
   );
 

@@ -31,6 +31,8 @@ export interface LanDevice {
   gateway?: boolean;
   /** შემთხვევითი (privacy) MAC — ჩვეულებრივ ტელეფონი */
   randomMac?: boolean;
+  /** მწარმოებელი MAC-ით (Apple, Samsung, TP-Link …); შემთხვევით MAC-ზე — null */
+  vendor?: string | null;
   iface?: string;
   /** ამ მოწყობილობაზე NetWatch მუშაობს */
   peer: LanPeer | null;

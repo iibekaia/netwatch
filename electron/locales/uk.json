@@ -77,7 +77,8 @@
     "phoneTablet": "Телефон / планшет",
     "unknown": "Невідомий пристрій",
     "group": "Група: {name}",
-    "randomMac": "Випадковий MAC"
+    "randomMac": "Випадковий MAC",
+    "nic": "Мережева карта: {vendor}"
   },
   "speed": {
     "provider": "Провайдер",

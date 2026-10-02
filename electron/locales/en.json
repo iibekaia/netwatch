@@ -77,7 +77,8 @@
     "phoneTablet": "Phone / tablet",
     "unknown": "Unknown device",
     "group": "Group: {name}",
-    "randomMac": "Random MAC"
+    "randomMac": "Random MAC",
+    "nic": "Network card: {vendor}"
   },
   "speed": {
     "provider": "Provider",

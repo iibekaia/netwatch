@@ -81,7 +81,8 @@
     "phoneTablet": "ტელეფონი / პლანშეტი",
     "unknown": "უცნობი მოწყობილობა",
     "group": "ჯგუფი: {name}",
-    "randomMac": "შემთხვევითი MAC"
+    "randomMac": "შემთხვევითი MAC",
+    "nic": "ქსელის ბარათი: {vendor}"
   },
   "speed": {
     "provider": "პროვაიდერი",

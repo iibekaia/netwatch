@@ -116,6 +116,12 @@ npm run dist:linux    # Linux (Linux-ზე ან macOS-ზე)
 
 admin უფლებები საჭირო არ არის. თუ Wi-Fi-ზე „client isolation“ ჩართულია (ხშირად სტუმრების ქსელში), სხვა მოწყობილობები არ გამოჩნდება.
 
+**მწარმოებელი MAC-ით** (`electron/vendor.js`): Apple, Samsung, TP-Link და ა.შ. მოწყობილობის ხაზზე ჩანს. მის მიხედვით ირჩევა იკონკაც (ტელეფონი, როუტერი, ტელევიზორი, პრინტერი, კამერა…). ბაზა ოფლაინია, ~54 000 მწარმოებელი IEEE-ის რეესტრიდან (`electron/data/oui.json`), და მისამართები არსად იგზავნება. Wi-Fi ჩიპების მწარმოებლებისთვის (Intel, Realtek…) იწერება „ქსელის ბარათი: Intel“, რადგან ეს ჩიპია და არა ლეპტოპის ბრენდი. შემთხვევით (privacy) MAC-ს მწარმოებელი არ აქვს. ბაზის განახლება (წელიწადში ერთხელ საკმარისია):
+
+```bash
+npm update oui-data && npm run oui
+```
+
 **NetWatch-ის მომხმარებლები მწვანედ არის მონიშნული** (`electron/peer-discovery.js`). ყოველი NetWatch UDP **47821** პორტზე broadcast-ით აცხადებს თავს (კომპიუტერის სახელს, მომხმარებელს, ვერსიას) და პასუხობს სხვებს. პირველ გაშვებაზე Windows Firewall იკითხავს წვდომას. სხვები ამ კომპიუტერს მხოლოდ **Allow**-ის შემდეგ დაინახავენ (Private ქსელისთვის).
 
 ## „სად არის პრობლემა?“ (დიაგნოსტიკა)
@@ -181,6 +187,7 @@ electron/
   connection-monitor.js   კავშირის შემოწმების ლოგიკა (EventEmitter)
   preload.js              window.netwatch API (contextBridge)
   lan-scanner.js          ლოკალური ქსელის სკანირება (NetBIOS + ARP + DNS)
+  vendor.js               MAC → მწარმოებელი (data/oui.json, ოფლაინ)
   peer-discovery.js       NetWatch-ის სხვა ასლების პოვნა (UDP 47821)
   speed-test.js           სიჩქარის ტესტი + პროვაიდერის ინფო
   updater.js              ავტომატური განახლება (electron-updater / GitHub API)
