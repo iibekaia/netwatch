@@ -1,0 +1,92 @@
+<main class="shell">
+  <header class="top">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <h1>NetWatch</h1>
+    </div>
+    @if (conn.isElectron) {
+      <button class="ghost" (click)="conn.toggleDevTools()" title="F12 / Ctrl+Shift+I">
+        Inspect
+      </button>
+    }
+  </header>
+
+  <section class="status" [class]="stateClass()" aria-live="polite">
+    <div class="pulse" aria-hidden="true">
+      <span class="dot"></span>
+    </div>
+    <p class="state">{{ stateLabel() }}</p>
+    <p class="sub">{{ reasonLabel() }}</p>
+    <p class="duration">
+      {{ conn.online() === false ? 'გათიშულია' : 'ჩართულია' }} უკვე
+      <strong>{{ duration() }}</strong>
+    </p>
+  </section>
+
+  <section class="metrics">
+    <div class="metric">
+      <span class="label">დაყოვნება</span>
+      <span class="value">
+        {{ conn.status().latencyMs !== null ? conn.status().latencyMs + ' ms' : '—' }}
+      </span>
+    </div>
+    <div class="metric">
+      <span class="label">ბოლო შემოწმება</span>
+      <span class="value">
+        {{ conn.status().lastCheck ? (conn.status().lastCheck | date: 'HH:mm:ss') : '—' }}
+      </span>
+    </div>
+    <div class="metric">
+      <span class="label">ცვლილებები</span>
+      <span class="value">{{ conn.events().length }}</span>
+    </div>
+  </section>
+
+  <div class="actions">
+    <button class="primary" (click)="conn.checkNow()" [disabled]="conn.checking()">
+      {{ conn.checking() ? 'მოწმდება…' : 'შეამოწმე ახლავე' }}
+    </button>
+  </div>
+
+  <section class="log">
+    <div class="log-head">
+      <h2>მოვლენების ისტორია</h2>
+      @if (conn.events().length) {
+        <button class="link" (click)="conn.clearLog()">გასუფთავება</button>
+      }
+    </div>
+
+    <ul>
+      @for (e of conn.events(); track e.id) {
+        <li [class.on]="e.online" [class.off]="!e.online">
+          <span class="badge">{{ e.online ? 'ჩაირთო' : 'გაითიშა' }}</span>
+          <span class="time">{{ e.at | date: 'HH:mm:ss' }}</span>
+          <span class="meta">
+            {{ reasonText(e.reason) }}
+            @if (e.previousDuration !== null) {
+              · წინა მდგომარეობა {{ formatDuration(e.previousDuration) }}
+            }
+          </span>
+        </li>
+      } @empty {
+        <li class="empty">ჯერ ცვლილება არ ყოფილა. სცადე Wi-Fi-ის გათიშვა.</li>
+      }
+    </ul>
+  </section>
+
+  <footer>
+    @if (versions) {
+      Electron {{ versions.electron }} · Chrome {{ versions.chrome }} · Node {{ versions.node }}
+    } @else {
+      ბრაუზერის რეჟიმი — მხოლოდ navigator.onLine
+    }
+  </footer>
+</main>
+
+<div class="toasts">
+  @for (t of toasts(); track t.id) {
+    <div class="toast" [class.on]="t.online" [class.off]="!t.online" (click)="dismiss(t.id)">
+      {{ t.text }}
+    </div>
+  }
+</div>

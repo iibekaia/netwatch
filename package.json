@@ -1,0 +1,53 @@
+{
+  "name": "netwatch",
+  "version": "1.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng build && electron .",
+    "dev": "concurrently -k -n ng,electron -c magenta,cyan \"ng serve --port 4200\" \"wait-on tcp:127.0.0.1:4200 && electron . --dev\"",
+    "electron": "electron .",
+    "build": "ng build",
+    "test": "ng test"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "singleQuote": true,
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/common": "^20.3.0",
+    "@angular/compiler": "^20.3.0",
+    "@angular/core": "^20.3.0",
+    "@angular/forms": "^20.3.0",
+    "@angular/platform-browser": "^20.3.0",
+    "@angular/router": "^20.3.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^20.3.37",
+    "@angular/cli": "^20.3.37",
+    "@angular/compiler-cli": "^20.3.0",
+    "@types/jasmine": "~5.1.0",
+    "concurrently": "^10.0.5",
+    "electron": "^38.8.6",
+    "jasmine-core": "~5.9.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "typescript": "~5.9.2",
+    "wait-on": "^9.5.1"
+  },
+  "description": "Electron + Angular — ინტერნეტ-კავშირის ლაივ მონიტორი",
+  "main": "electron/main.js"
+}
