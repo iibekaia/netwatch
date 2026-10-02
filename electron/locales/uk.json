@@ -32,7 +32,9 @@
     "current": "У вас {version}",
     "restart": "Перезапустити",
     "download": "Завантажити",
-    "error": "Не вдалося перевірити оновлення"
+    "error": "Не вдалося перевірити оновлення",
+    "later": "Пізніше",
+    "pending": "Оновлення {version}"
   },
   "conn": { "onlineFor": "Онлайн уже {time}", "offlineFor": "Офлайн уже {time}", "checking": "Перевірка…", "checkedAt": "перевірено {time}" },
   "diag": {

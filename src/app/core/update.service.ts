@@ -17,6 +17,24 @@ export class UpdateService {
     ['available', 'downloading', 'downloaded'].includes(this.state()?.status ?? '')
   );
 
+  /**
+   * მოდალი დახურა „მოგვიანებით“-ით — რომელ მდგომარეობაზე (status:version).
+   * მდგომარეობა თუ შეიცვალა (მაგ. გადმოწერა დასრულდა → „გადატვირთვა“), მოდალი ისევ ჩნდება.
+   */
+  private readonly dismissedKey = signal<string | null>(null);
+  private readonly key = computed(() => `${this.state()?.status}:${this.state()?.version}`);
+  /** მოდალი ჩანს */
+  readonly modalOpen = computed(() => this.hasUpdate() && this.dismissedKey() !== this.key());
+
+  dismiss(): void {
+    this.dismissedKey.set(this.key());
+  }
+
+  /** footer-იდან ხელახლა გახსნა */
+  reopen(): void {
+    this.dismissedKey.set(null);
+  }
+
   constructor() {
     if (!this.api) return;
     inject(DestroyRef).onDestroy(this.api.onUpdate((s) => this.state.set(s)));

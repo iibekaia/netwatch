@@ -36,7 +36,9 @@
     "current": "ახლა გაქვს {version}",
     "restart": "გადატვირთვა",
     "download": "გადმოწერა",
-    "error": "განახლების შემოწმება ვერ მოხერხდა"
+    "error": "განახლების შემოწმება ვერ მოხერხდა",
+    "later": "მოგვიანებით",
+    "pending": "განახლება {version}"
   },
   "conn": { "onlineFor": "ონლაინ უკვე {time}", "offlineFor": "ოფლაინ უკვე {time}", "checking": "მოწმდება…", "checkedAt": "შემოწმდა {time}" },
   "diag": {

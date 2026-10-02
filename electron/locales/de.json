@@ -32,7 +32,9 @@
     "current": "Installiert: {version}",
     "restart": "Neu starten",
     "download": "Herunterladen",
-    "error": "Updateprüfung fehlgeschlagen"
+    "error": "Updateprüfung fehlgeschlagen",
+    "later": "Später",
+    "pending": "Update {version}"
   },
   "conn": { "onlineFor": "Seit {time} online", "offlineFor": "Seit {time} offline", "checking": "Wird geprüft…", "checkedAt": "geprüft {time}" },
   "diag": {

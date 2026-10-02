@@ -47,10 +47,6 @@
     <!--    }-->
   </header>
 
-  @if (update.hasUpdate()) {
-    <app-update-banner />
-  }
-
   <!-- ქსელი და სიჩქარე მხოლოდ Electron-შია (ბრაუზერში — მხოლოდ კავშირი) -->
   @if (lan.available) {
     <!-- sticky: გვერდის სქროლვისას ტაბები ზემოთ რჩება. ფონი და blur — რომ ქვემოდან ამოსული
@@ -117,6 +113,13 @@
             <span class="text-bad/80">· {{ i18n.t('update.error') }}</span>
           }
         }
+        @if (update.hasUpdate() && !update.modalOpen()) {
+          <!-- მოდალი დაიხურა „მოგვიანებით“-ით — აქედან ხელახლა -->
+          <span>·</span>
+          <button class="font-medium text-accent underline-offset-2 hover:underline" (click)="update.reopen()">
+            {{ i18n.t('update.pending', { version: u.version ?? '' }) }}
+          </button>
+        }
         @if (!update.hasUpdate() && u.status !== 'checking') {
           <span>·</span>
           <button class="underline-offset-2 hover:text-text hover:underline" (click)="update.check()">
@@ -134,3 +137,8 @@
 </main>
 
 <app-toasts />
+
+<!-- ახალი ვერსია — მოდალი ყველაფრის ზემოთ (დახურვის შემდეგ footer-იდან იხსნება) -->
+@if (update.modalOpen()) {
+  <app-update-banner />
+}

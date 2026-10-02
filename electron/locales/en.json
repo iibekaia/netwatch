@@ -32,7 +32,9 @@
     "current": "You have {version}",
     "restart": "Restart",
     "download": "Download",
-    "error": "Couldn't check for updates"
+    "error": "Couldn't check for updates",
+    "later": "Later",
+    "pending": "Update {version}"
   },
   "conn": { "onlineFor": "Online for {time}", "offlineFor": "Offline for {time}", "checking": "Checking…", "checkedAt": "checked {time}" },
   "diag": {
