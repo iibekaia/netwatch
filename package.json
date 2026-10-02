@@ -87,10 +87,10 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "NetWatch",
-      "artifactName": "NetWatch-Setup-${version}.${ext}"
+      "artifactName": "NetWatch-Setup.${ext}"
     },
     "portable": {
-      "artifactName": "NetWatch-Portable-${version}.${ext}"
+      "artifactName": "NetWatch-Portable.${ext}"
     },
     "publish": null
   }
