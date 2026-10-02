@@ -95,6 +95,20 @@ admin უფლებები საჭირო არ არის. თუ Wi
 
 **NetWatch-ის მომხმარებლები მწვანედ არის მონიშნული** (`electron/peer-discovery.js`). ყოველი NetWatch UDP **47821** პორტზე broadcast-ით აცხადებს თავს (კომპიუტერის სახელს, მომხმარებელს, ვერსიას) და პასუხობს სხვებს. პირველ გაშვებაზე Windows Firewall იკითხავს წვდომას. სხვები ამ კომპიუტერს მხოლოდ **Allow**-ის შემდეგ დაინახავენ (Private ქსელისთვის).
 
+## „სად არის პრობლემა?“ (დიაგნოსტიკა)
+
+`electron/diagnostics.js` კავშირს ჯაჭვად ამოწმებს. პირველი წითელი რგოლი აჩვენებს, სად წყდება კავშირი:
+
+| რგოლი | როგორ მოწმდება | შეცდომისას |
+|---|---|---|
+| კომპიუტერი | აქვს თუ არა ადაპტერს IP (169.254.x.x ნიშნავს, რომ როუტერმა არ მისცა) | Wi-Fi/კაბელი, DHCP |
+| როუტერი | `ping` + TCP 80/443/53 (უარის პასუხიც = „ცოცხალია“) | როუტერის გადატვირთვა |
+| ინტერნეტი | TCP 443 → 1.1.1.1 / 8.8.8.8 / 9.9.9.9 (DNS-ის გარეშე) | პროვაიდერის მხარე |
+| DNS | სისტემის DNS, შედარებისთვის 1.1.1.1 | DNS-ის შეცვლა |
+| ვები | HTTP 204 გვერდი (სხვა პასუხი ნიშნავს Wi-Fi-ის ავტორიზაციის გვერდს) | captive portal / firewall |
+
+ყველა რგოლი პარალელურად მოწმდება (ჩვეულებრივ < 1 წამი, მაქს. ~3 წამი), admin უფლებების გარეშე. **ინტერნეტის გათიშვისას ავტომატურად ეშვება** და Windows-ის შეტყობინება მიზეზს წერს. აღდგენისას თავიდან მოწმდება. ხელით გაშვება: ტაბი „კავშირი“ → **შემოწმება**.
+
 ## სიჩქარე და პროვაიდერი (ტაბი „სიჩქარე“)
 
 `electron/speed-test.js`, სერვერი არის Cloudflare-ის საჯარო speed test (`speed.cloudflare.com`), ანგარიში არ სჭირდება:
@@ -134,6 +148,7 @@ electron/
   peer-discovery.js       NetWatch-ის სხვა ასლების პოვნა (UDP 47821)
   speed-test.js           სიჩქარის ტესტი + პროვაიდერის ინფო
   updater.js              ავტომატური განახლება (electron-updater / GitHub API)
+  diagnostics.js          „სად არის პრობლემა?“ — კავშირის ჯაჭვის შემოწმება
 
 src/
   styles.css              Tailwind + თემა (ფერები light/dark) + საერთო კლასები
@@ -146,6 +161,7 @@ src/
       speed.service.ts        სიჩქარის ტესტი, პროვაიდერი, ისტორია
       toast.service.ts        ამომხტარი შეტყობინებები
       update.service.ts       აპის განახლების მდგომარეობა
+      diagnostics.service.ts  დიაგნოსტიკის მდგომარეობა
       netwatch.types.ts       window.netwatch API-ის ტიპები
     shared/format.ts      ფორმატირება (ხანგრძლივობა, რიცხვები, netmask)
     layout/
@@ -153,7 +169,7 @@ src/
       toasts/             შეტყობინებების ჩვენება
       update-banner/      ახალი ვერსიის ბანერი
     features/
-      status/   status-tab, event-log
+      status/   status-tab, event-log, diagnostics-card
       lan/      lan-tab, device-card
       speed/    speed-tab, provider-card, speed-meter, speed-history
 ```

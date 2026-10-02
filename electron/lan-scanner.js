@@ -277,4 +277,4 @@ function isRandomMac(mac) {
   return !!mac && (parseInt(mac.slice(0, 2), 16) & 0x02) !== 0;
 }
 
-module.exports = { scan, localSubnets };
+module.exports = { scan, localSubnets, defaultGateway };

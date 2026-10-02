@@ -17,6 +17,11 @@
   </p>
 </section>
 
+<!-- ოფლაინ — დიაგნოსტიკა ზემოთ, ყველაზე საჭირო ადგილას -->
+@if (conn.online() === false) {
+  <app-diagnostics-card />
+}
+
 <section class="card grid grid-cols-3 divide-x divide-border p-0">
   @for (m of metrics(); track m.label) {
     <div class="flex min-w-0 flex-col gap-1 px-4 py-3.5">
@@ -29,5 +34,9 @@
 <button class="btn-primary" (click)="conn.checkNow()" [disabled]="conn.checking()">
   {{ conn.checking() ? 'მოწმდება…' : 'შეამოწმე ახლავე' }}
 </button>
+
+@if (conn.online() !== false) {
+  <app-diagnostics-card />
+}
 
 <app-event-log class="mt-2 flex min-h-0 flex-1 flex-col" [events]="conn.events()" (clear)="conn.clearLog()" />

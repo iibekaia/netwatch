@@ -5,6 +5,7 @@ const lanScanner = require('./lan-scanner');
 const { PeerDiscovery } = require('./peer-discovery');
 const { SpeedTest, providerInfo } = require('./speed-test');
 const { Updater } = require('./updater');
+const { runDiagnostics } = require('./diagnostics');
 
 // --dev: Angular იტვირთება ng serve-დან (http://localhost:4200), DevTools ავტომატურად იხსნება
 const isDev = process.argv.includes('--dev');
@@ -26,11 +27,16 @@ let win = null;
 
 function handleOffline(status, prev) {
   console.log(`[netwatch] ❌ ინტერნეტი გაითიშა (${status.reason})`);
-  // პირველ შემოწმებაზე (როცა წინა მდგომარეობა უცნობია) შეტყობინებას არ ვაჩვენებთ
-  if (prev.online !== null) {
-    notify('ინტერნეტი გაითიშა', 'კავშირი დაიკარგა. ველოდები აღდგენას…');
-  }
   win?.flashFrame(true);
+
+  // დიაგნოსტიკა ავტომატურად — შეტყობინებაში უკვე მიზეზი ეწერება ("როუტერი არ პასუხობს" …)
+  diagnose('offline').then((result) => {
+    // პირველ შემოწმებაზე (როცა წინა მდგომარეობა უცნობია) შეტყობინებას არ ვაჩვენებთ
+    if (prev.online === null) return;
+    const v = result?.verdict;
+    if (v && v.level !== 'ok') notify(`ინტერნეტი გაითიშა — ${v.title}`, v.advice);
+    else notify('ინტერნეტი გაითიშა', 'კავშირი დაიკარგა. ველოდები აღდგენას…');
+  });
 }
 
 function handleOnline(status, prev) {
@@ -43,6 +49,39 @@ function handleOnline(status, prev) {
   peers.announce();
   scanLan();
   loadProvider();
+  // ბოლო დიაგნოსტიკამ პრობლემა აჩვენა — თავიდან, რომ ეკრანზე ძველი "წითელი" არ დარჩეს
+  if (diag.result && diag.result.verdict.level !== 'ok') diagnose('online');
+}
+
+// ─────────────────────────────────────────────
+//  დიაგნოსტიკა — „სად არის პრობლემა?“
+// ─────────────────────────────────────────────
+
+const diag = { running: false, trigger: null, result: null };
+let diagRunning = null;
+
+function sendDiag() {
+  if (win && !win.isDestroyed()) win.webContents.send('diag:update', diag);
+}
+
+/** ერთდროულად მხოლოდ ერთი დიაგნოსტიკა; მიმდინარეს თუ ითხოვენ — იგივე Promise ბრუნდება */
+function diagnose(trigger) {
+  if (diagRunning) return diagRunning;
+  diag.running = true;
+  diag.trigger = trigger;
+  sendDiag();
+  diagRunning = runDiagnostics()
+    .then((result) => (diag.result = result))
+    .catch((err) => {
+      console.warn('[diag] failed', err);
+      return null;
+    })
+    .finally(() => {
+      diag.running = false;
+      diagRunning = null;
+      sendDiag();
+    });
+  return diagRunning;
 }
 
 function handleChange(status) {
@@ -161,6 +200,11 @@ ipcMain.handle('speed:run', async () => {
   }
 });
 ipcMain.on('speed:cancel', () => speedTest.cancel());
+ipcMain.handle('diag:get', () => diag);
+ipcMain.handle('diag:run', async () => {
+  await diagnose('manual');
+  return diag;
+});
 ipcMain.handle('update:get', () => updater.state);
 ipcMain.handle('update:check', () => updater.check());
 ipcMain.on('update:install', () => updater.install());

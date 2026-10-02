@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { ConnectionService } from '../../../core/connection.service';
 import { formatDuration, reasonText } from '../../../shared/format';
 import { EventLog } from '../event-log/event-log';
+import { DiagnosticsCard } from '../diagnostics-card/diagnostics-card';
 
 /** ფერები მდგომარეობის მიხედვით (Tailwind კლასები) */
 const TONES = {
@@ -14,7 +15,7 @@ const TONES = {
 /** ტაბი „კავშირი“: მიმდინარე მდგომარეობა, მეტრიკები, მოვლენების ისტორია */
 @Component({
   selector: 'app-status-tab',
-  imports: [EventLog],
+  imports: [EventLog, DiagnosticsCard],
   templateUrl: './status-tab.html',
   host: { class: 'flex min-h-0 flex-1 flex-col gap-3' },
 })

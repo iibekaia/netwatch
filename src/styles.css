@@ -6,6 +6,7 @@
      ok     — ონლაინ / NetWatch-ის მომხმარებელი (მწვანე)
      bad    — ოფლაინ / შეცდომა (წითელი)
      accent — აქტიური ელემენტი, პროგრესი (ლურჯი)
+     warn   — გაფრთხილება (ქარვისფერი)
    მთავარი ღილაკი — "მელანი" (ტექსტის ფერი): light-ში შავი, dark-ში თეთრი.
    Tailwind-ში: bg-card, text-muted, border-border, text-ok, bg-bad/10 …
    ───────────────────────────────────────────── */
@@ -21,6 +22,7 @@
   --accent: #2563eb;
   --ok: #10b981;
   --bad: #ef4444;
+  --warn: #f59e0b;
   color-scheme: light dark;
 }
 
@@ -36,6 +38,7 @@
     --accent: #60a5fa;
     --ok: #34d399;
     --bad: #f87171;
+    --warn: #fbbf24;
   }
 }
 
@@ -50,6 +53,7 @@
   --color-accent: var(--accent);
   --color-ok: var(--ok);
   --color-bad: var(--bad);
+  --color-warn: var(--warn);
 
   /* Noto Sans Georgian (ცვლადი, წონა 100–900) აპშია ჩაშენებული — angular.json → styles,
      ამიტომ ინტერნეტის გარეშეც იტვირთება */

@@ -1,0 +1,59 @@
+@let state = diag.state();
+
+<div class="flex items-center justify-between gap-3">
+  <div class="flex items-center gap-2">
+    <app-icon name="stethoscope" class="size-4 text-muted" />
+    <h2 class="section-title">სად არის პრობლემა?</h2>
+  </div>
+  <button class="btn-soft" (click)="diag.run()" [disabled]="state.running">
+    <app-icon name="refresh" class="size-3.5" [class.animate-spin]="state.running" />
+    {{ state.running ? 'მოწმდება…' : 'შემოწმება' }}
+  </button>
+</div>
+
+<!-- ჯაჭვი: კომპიუტერი → როუტერი → ინტერნეტი → DNS → ვები -->
+<ol class="mt-5 flex items-start">
+  @for (n of nodes(); track n.id; let last = $last) {
+    <li class="flex min-w-0 flex-1 flex-col items-center gap-1.5 text-center" [title]="n.step?.detail ?? ''">
+      <div class="relative flex w-full items-center justify-center">
+        <span
+          class="relative z-10 grid size-10 place-items-center rounded-full transition-colors duration-300"
+          [class]="n.tone"
+          [class.animate-pulse]="n.pulse"
+        >
+          <app-icon [name]="n.icon" class="size-[18px]" />
+        </span>
+        @if (!last) {
+          <!-- ხაზი შემდეგ რგოლამდე -->
+          <span class="absolute top-1/2 left-1/2 h-0.5 w-full -translate-y-1/2 rounded-full" [class]="n.link"></span>
+        }
+      </div>
+      <span class="w-full truncate text-[11.5px] font-medium">{{ n.label }}</span>
+      <span class="h-3.5 text-[10.5px] text-muted tabular-nums">
+        @if (n.step?.ms !== null && n.step?.ms !== undefined) {
+          {{ n.step!.ms }} ms
+        } @else if (n.step?.status === 'fail') {
+          <span class="text-bad">შეცდომა</span>
+        }
+      </span>
+    </li>
+  }
+</ol>
+
+@if (state.result; as r) {
+  <div class="mt-4 rounded-xl px-3.5 py-3" [class]="verdictTone()">
+    <strong class="block text-[13.5px] font-semibold">{{ r.verdict.title }}</strong>
+    <p class="mt-0.5 text-[12.5px] leading-relaxed text-muted">{{ r.verdict.advice }}</p>
+  </div>
+  <p class="mt-2.5 text-[11px] text-muted/80">
+    შემოწმდა {{ r.at | date: 'HH:mm:ss' }}
+    @if (triggerLabel()) {
+      · {{ triggerLabel() }}
+    }
+  </p>
+} @else if (!state.running) {
+  <p class="mt-4 text-[12.5px] text-muted">
+    შეამოწმე კავშირის თითოეული რგოლი — თუ ინტერნეტი გაითიშა, ნახავ სად წყდება. გათიშვისას
+    შემოწმება ავტომატურად ეშვება.
+  </p>
+}

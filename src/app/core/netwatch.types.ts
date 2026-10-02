@@ -87,6 +87,37 @@ export interface SpeedResult {
 
 export type SpeedRunResponse = { ok: true; result: SpeedResult } | { ok: false; error: string };
 
+/** კავშირის ჯაჭვის რგოლი: კომპიუტერი → როუტერი → ინტერნეტი → DNS → ვები */
+export type DiagStepId = 'adapter' | 'router' | 'internet' | 'dns' | 'web';
+
+export interface DiagStep {
+  id: DiagStepId;
+  status: 'ok' | 'warn' | 'fail' | 'skip';
+  detail: string;
+  /** პასუხის დრო */
+  ms: number | null;
+}
+
+export interface DiagResult {
+  at: number;
+  durationMs: number;
+  steps: DiagStep[];
+  verdict: {
+    level: 'ok' | 'warn' | 'bad';
+    /** პირველი ჩავარდნილი რგოლი */
+    failedAt: DiagStepId | null;
+    title: string;
+    advice: string;
+  };
+}
+
+export interface DiagState {
+  running: boolean;
+  /** რამ გაუშვა: offline (ავტომატურად) | online | manual */
+  trigger: string | null;
+  result: DiagResult | null;
+}
+
 export type UpdateStatus =
   | 'disabled'
   | 'idle'
@@ -123,6 +154,9 @@ export interface NetwatchApi {
   runSpeedTest(): Promise<SpeedRunResponse>;
   cancelSpeedTest(): void;
   onSpeedProgress(cb: (p: SpeedProgress) => void): () => void;
+  getDiagnostics(): Promise<DiagState>;
+  runDiagnostics(): Promise<DiagState>;
+  onDiagnostics(cb: (s: DiagState) => void): () => void;
   getUpdate(): Promise<UpdateState>;
   checkUpdate(): Promise<UpdateState>;
   installUpdate(): void;

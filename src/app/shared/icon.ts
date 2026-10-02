@@ -12,7 +12,10 @@ export type IconName =
   | 'user'
   | 'refresh'
   | 'arrow-down'
-  | 'arrow-up';
+  | 'arrow-up'
+  | 'server'
+  | 'window'
+  | 'stethoscope';
 
 /**
  * ხაზოვანი იკონკები (Lucide-ის სტილი, 24×24, stroke = currentColor).
@@ -87,6 +90,21 @@ export type IconName =
         @case ('arrow-up') {
           <path d="M12 19V5" />
           <path d="m5 12 7-7 7 7" />
+        }
+        @case ('server') {
+          <rect x="2" y="3" width="20" height="8" rx="2" />
+          <rect x="2" y="13" width="20" height="8" rx="2" />
+          <path d="M6 7h.01M6 17h.01" />
+        }
+        @case ('window') {
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <path d="M2 9h20M6 4v5M10 4v5" />
+        }
+        @case ('stethoscope') {
+          <path d="M11 2v2M5 2v2" />
+          <path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1" />
+          <path d="M8 15a6 6 0 0 0 12 0v-3" />
+          <circle cx="20" cy="10" r="2" />
         }
       }
     </svg>
