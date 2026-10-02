@@ -20,6 +20,7 @@ export class SpeedService {
   readonly phaseProgress = signal(0);
   /** მიმდინარე ტესტის მნიშვნელობები (ცოცხლად ახლდება) */
   readonly live = signal<Partial<SpeedResult>>({});
+  /** შეცდომის თარგმანის გასაღები (speed.error) */
   readonly error = signal<string | null>(null);
   /** ბოლო 10 შედეგი (ახალი — თავში) */
   readonly history = signal<SpeedResult[]>(loadHistory());
@@ -63,7 +64,7 @@ export class SpeedService {
         this.history.update((h) => [res.result, ...h].slice(0, 10));
         saveHistory(this.history());
       } else if (!/abort|cancel/i.test(res.error)) {
-        this.error.set('ტესტი ვერ შესრულდა — შეამოწმე ინტერნეტი');
+        this.error.set('speed.error'); // თარგმანის გასაღები
       }
     } finally {
       this.running.set(false);

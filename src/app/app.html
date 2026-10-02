@@ -7,6 +7,24 @@
       <h1 class="text-[17px] font-semibold tracking-tight">NetWatch</h1>
     </div>
 
+    <div class="flex items-center gap-2">
+    <!-- ენის გადამრთველი (native select — კლავიატურითაც და ეკრანის მკითხველითაც მუშაობს) -->
+    <label class="relative">
+      <span class="sr-only">{{ i18n.t('lang.label') }}</span>
+      <select
+        class="h-7 cursor-pointer appearance-none rounded-full bg-card py-0 pr-7 pl-3 text-xs text-muted shadow-soft ring-1 ring-border transition outline-none hover:text-text focus-visible:ring-2 focus-visible:ring-accent"
+        [value]="i18n.lang()"
+        (change)="setLang($event)"
+      >
+        @for (l of i18n.languages; track l.code) {
+          <option [value]="l.code" [selected]="l.code === i18n.lang()">{{ l.name }}</option>
+        }
+      </select>
+      <svg class="pointer-events-none absolute top-1/2 right-2.5 size-3 -translate-y-1/2 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m6 9 6 6 6-6" />
+      </svg>
+    </label>
+
     <!-- მიმდინარე მდგომარეობა — ყველა ტაბიდან ჩანს; ოფლაინ — გამოკვეთილად -->
     <span
       class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs transition-colors"
@@ -21,6 +39,7 @@
       </span>
       {{ statusText() }}
     </span>
+    </div>
     <!--    @if (conn.isElectron) {-->
     <!--      <button class="btn-soft" (click)="conn.toggleDevTools()" title="F12 / Ctrl+Shift+I">-->
     <!--        Inspect-->
@@ -69,7 +88,7 @@
             [class.translate-x-3.5]="autostart.state().enabled"
           ></span>
         </button>
-        კომპიუტერთან ერთად ჩართვა (ფონზე, tray-ში)
+        {{ i18n.t('footer.autostart') }}
       </label>
     }
     @if (update.enabled()) {
@@ -78,19 +97,19 @@
         NetWatch {{ u.currentVersion }}
         @switch (u.status) {
           @case ('checking') {
-            <span>· მოწმდება…</span>
+            <span>· {{ i18n.t('footer.checking') }}</span>
           }
           @case ('up-to-date') {
-            <span>· ბოლო ვერსიაა</span>
+            <span>· {{ i18n.t('footer.upToDate') }}</span>
           }
           @case ('error') {
-            <span class="text-bad/80">· {{ u.error }}</span>
+            <span class="text-bad/80">· {{ i18n.t('update.error') }}</span>
           }
         }
         @if (!update.hasUpdate() && u.status !== 'checking') {
           <span>·</span>
           <button class="underline-offset-2 hover:text-text hover:underline" (click)="update.check()">
-            შემოწმება
+            {{ i18n.t('footer.check') }}
           </button>
         }
       </p>
@@ -98,7 +117,7 @@
     @if (versions) {
       <p>Electron {{ versions.electron }} · Chrome {{ versions.chrome }} · Node {{ versions.node }}</p>
     } @else {
-      <p>ბრაუზერის რეჟიმი — მხოლოდ navigator.onLine</p>
+      <p>{{ i18n.t('footer.browserMode') }}</p>
     }
   </footer>
 </main>

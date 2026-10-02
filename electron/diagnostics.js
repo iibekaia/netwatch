@@ -35,11 +35,10 @@ async function runDiagnostics() {
     iface.status === 'ok' ? dnsCheck() : skip('dns'),
     iface.status === 'ok' ? webStep() : skip('web'),
   ]);
-
   // როუტერი შემოწმებას არ პასუხობს, მაგრამ ინტერნეტი მუშაობს → უბრალოდ ბლოკავს ping-ს
   if (router.status === 'fail' && internet.status === 'ok') {
     router.status = 'warn';
-    router.detail = 'შემოწმებას არ პასუხობს, მაგრამ კავშირი მუშაობს';
+    router.detail = detail('router.blocked');
   }
 
   const steps = [iface, router, internet, dnsStep, web];
@@ -47,48 +46,51 @@ async function runDiagnostics() {
 }
 
 // ───────── რგოლები ─────────
+// ტექსტი აქ არ იწერება — მხოლოდ გასაღები (diag.detail.*) და პარამეტრები; ითარგმნება ჩვენებისას
 
 function adapterStep() {
   const all = localSubnets();
   if (all.length) {
     const s = all[0];
-    return step('adapter', 'ok', `${s.iface} · ${s.address}`);
+    return step('adapter', 'ok', detail('adapter.ok', { iface: s.iface, ip: s.address }));
   }
   // ინტერფეისი არის, მაგრამ მხოლოდ 169.254.x.x — როუტერმა (DHCP) IP არ მისცა
   const os = require('os');
   const apipa = Object.values(os.networkInterfaces())
     .flat()
     .some((a) => a?.family === 'IPv4' && !a.internal && a.address.startsWith('169.254.'));
-  return step('adapter', 'fail', apipa ? 'როუტერმა IP მისამართი არ მისცა' : 'ქსელთან მიერთებული არ არის');
+  const s = step('adapter', 'fail', detail(apipa ? 'adapter.dhcp' : 'adapter.off'));
+  s.dhcp = apipa;
+  return s;
 }
 
 async function routerStep(ip) {
-  if (!ip) return step('router', 'fail', 'როუტერის მისამართი ვერ მოიძებნა');
+  if (!ip) return step('router', 'fail', detail('router.noGateway'));
   const t0 = Date.now();
   const alive = await firstTrue([pingHost(ip), ...[80, 443, 53].map((p) => tcpProbe(ip, p, true))]);
   return alive
-    ? step('router', 'ok', ip, Date.now() - t0)
-    : step('router', 'fail', `${ip} არ პასუხობს`);
+    ? step('router', 'ok', detail('router.ok', { ip }), Date.now() - t0)
+    : step('router', 'fail', detail('router.fail', { ip }));
 }
 
 async function internetStep() {
   const t0 = Date.now();
   const ok = await firstTrue(INTERNET_HOSTS.map((h) => tcpProbe(h, 443)));
   return ok
-    ? step('internet', 'ok', 'საჯარო სერვერები ხელმისაწვდომია', Date.now() - t0)
-    : step('internet', 'fail', 'საჯარო სერვერები მიუწვდომელია');
+    ? step('internet', 'ok', detail('internet.ok'), Date.now() - t0)
+    : step('internet', 'fail', detail('internet.fail'));
 }
 
 async function dnsCheck() {
   const t0 = Date.now();
   const system = await withTimeout(dns.lookup(DNS_TEST_NAME, { family: 4 }));
-  if (system) return step('dns', 'ok', 'სახელები იხსნება', Date.now() - t0);
+  if (system) return step('dns', 'ok', detail('dns.ok'), Date.now() - t0);
 
   // სისტემის DNS არ მუშაობს — ვამოწმებთ Cloudflare-ს, რომ რჩევა სწორი იყოს
   const resolver = new dns.Resolver({ timeout: TIMEOUT_MS, tries: 1 });
   resolver.setServers(['1.1.1.1']);
   const alt = await withTimeout(resolver.resolve4(DNS_TEST_NAME));
-  const s = step('dns', 'fail', alt ? 'სისტემის DNS სერვერი არ პასუხობს' : 'DNS მიუწვდომელია');
+  const s = step('dns', 'fail', detail(alt ? 'dns.system' : 'dns.fail'));
   s.altWorks = !!alt;
   return s;
 }
@@ -101,81 +103,38 @@ async function webStep() {
       cache: 'no-store',
       signal: AbortSignal.timeout(TIMEOUT_MS + 500),
     });
-    if (res.status === 204) return step('web', 'ok', 'ვებგვერდები იხსნება', Date.now() - t0);
+    if (res.status === 204) return step('web', 'ok', detail('web.ok'), Date.now() - t0);
     // 200 HTML / 30x გადამისამართება — Wi-Fi-ის ავტორიზაციის გვერდი
-    const s = step('web', 'fail', 'Wi-Fi ავტორიზაციას ითხოვს');
+    const s = step('web', 'fail', detail('web.captive'));
     s.captive = true;
     return s;
   } catch {
-    return step('web', 'fail', 'HTTP მოთხოვნა ვერ გავიდა');
+    return step('web', 'fail', detail('web.fail'));
   }
 }
 
 // ───────── დასკვნა ─────────
+// code → სათაური და რჩევა: locales/*.json → diag.verdict.<code>.title / .advice
 
 function verdict(steps) {
   const by = Object.fromEntries(steps.map((s) => [s.id, s]));
   const failed = (id) => by[id].status === 'fail';
 
-  if (failed('adapter')) {
-    return {
-      level: 'bad',
-      failedAt: 'adapter',
-      title: 'კომპიუტერი ქსელთან არ არის მიერთებული',
-      advice:
-        by.adapter.detail === 'როუტერმა IP მისამართი არ მისცა'
-          ? 'Wi-Fi/კაბელი მიერთებულია, მაგრამ როუტერმა მისამართი არ მისცა. გადატვირთე როუტერი ან გამორთე-ჩართე Wi-Fi.'
-          : 'შეამოწმე, ჩართულია თუ არა Wi-Fi ან მიერთებულია თუ არა კაბელი.',
-    };
-  }
-  if (failed('router') && failed('internet')) {
-    return {
-      level: 'bad',
-      failedAt: 'router',
-      title: 'როუტერი არ პასუხობს',
-      advice: 'გადატვირთე როუტერი (გამორთე 10 წამით). Wi-Fi-ზე თუ ხარ — მიუახლოვდი როუტერს.',
-    };
-  }
-  if (failed('internet')) {
-    return {
-      level: 'bad',
-      failedAt: 'internet',
-      title: 'პრობლემა პროვაიდერის მხარესაა',
-      advice:
-        'როუტერი მუშაობს, მაგრამ ინტერნეტი მასამდე არ მოდის. გადატვირთე როუტერი; თუ არ გამოსწორდა — დაუკავშირდი პროვაიდერს.',
-    };
-  }
-  if (failed('dns')) {
-    return {
-      level: 'bad',
-      failedAt: 'dns',
-      title: 'DNS არ მუშაობს',
-      advice: by.dns.altWorks
-        ? 'ინტერნეტი არის, მაგრამ შენი DNS სერვერი არ პასუხობს. ქსელის პარამეტრებში DNS შეცვალე 1.1.1.1-ით ან 8.8.8.8-ით.'
-        : 'ინტერნეტი არის, მაგრამ სახელები არ იხსნება. გადატვირთე როუტერი; შესაძლოა DNS ბლოკავს firewall ან VPN.',
-    };
-  }
+  if (failed('adapter')) return { level: 'bad', failedAt: 'adapter', code: by.adapter.dhcp ? 'adapter-dhcp' : 'adapter-off' };
+  if (failed('router') && failed('internet')) return { level: 'bad', failedAt: 'router', code: 'router' };
+  if (failed('internet')) return { level: 'bad', failedAt: 'internet', code: 'internet' };
+  if (failed('dns')) return { level: 'bad', failedAt: 'dns', code: by.dns.altWorks ? 'dns-server' : 'dns' };
   if (failed('web')) {
     return by.web.captive
-      ? {
-          level: 'warn',
-          failedAt: 'web',
-          title: 'Wi-Fi ავტორიზაციას ითხოვს',
-          advice: 'გახსენი ბრაუზერი — გამოჩნდება შესვლის გვერდი (სასტუმრო, კაფე, ოფისი).',
-        }
-      : {
-          level: 'bad',
-          failedAt: 'web',
-          title: 'ვებგვერდები არ იხსნება',
-          advice: 'კავშირი არის, მაგრამ HTTP იბლოკება. შეამოწმე VPN, proxy ან firewall.',
-        };
+      ? { level: 'warn', failedAt: 'web', code: 'captive' }
+      : { level: 'bad', failedAt: 'web', code: 'web' };
   }
-  return {
-    level: 'ok',
-    failedAt: null,
-    title: 'ყველაფერი რიგზეა',
-    advice: 'კავშირის ყველა რგოლი მუშაობს.',
-  };
+  return { level: 'ok', failedAt: null, code: 'ok' };
+}
+
+/** ძველი ჩანაწერებისთვის (code-მდე): failedAt → code */
+function codeFor(failedAt) {
+  return { adapter: 'adapter-off', router: 'router', internet: 'internet', dns: 'dns', web: 'web' }[failedAt] ?? null;
 }
 
 // ───────── helpers ─────────
@@ -184,8 +143,13 @@ function step(id, status, detail, ms = null) {
   return { id, status, detail, ms };
 }
 
+/** თარგმნადი აღწერა: { key: 'diag.detail.router.fail', params: { ip } } */
+function detail(key, params = {}) {
+  return { key: `diag.detail.${key}`, params };
+}
+
 function skip(id) {
-  return step(id, 'skip', 'არ შემოწმდა');
+  return step(id, 'skip', detail('skip'));
 }
 
 /** TCP კავშირი; acceptRefused — "connection refused"-იც ცოცხლად ითვლება (მოწყობილობამ უპასუხა) */
@@ -236,4 +200,4 @@ async function withTimeout(promise) {
   }
 }
 
-module.exports = { runDiagnostics };
+module.exports = { runDiagnostics, codeFor };

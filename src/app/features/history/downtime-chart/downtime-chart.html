@@ -13,7 +13,7 @@
         <button
           type="button"
           class="relative flex h-full min-w-0 flex-1 cursor-default items-end"
-          [attr.aria-label]="(b.date | date: 'd MMM') + ': ' + formatDuration(b.downtimeMs)"
+          [attr.aria-label]="i18n.date(b.date, 'day') + ': ' + i18n.duration(b.downtimeMs)"
           (mouseenter)="hovered.set(b.i)"
           (focus)="hovered.set(b.i)"
           (blur)="hovered.set(null)"
@@ -38,13 +38,13 @@
         class="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-text px-2.5 py-1.5 text-[11px] whitespace-nowrap text-bg shadow-lg"
         [style.left.%]="((t.i + 0.5) / bars().length) * 100"
       >
-        <div class="font-medium">{{ t.date | date: 'd MMM, EEE' }}</div>
+        <div class="font-medium">{{ i18n.date(t.date, 'dayWeek') }}</div>
         @if (t.noData) {
-          <div class="opacity-70">NetWatch არ მუშაობდა</div>
+          <div class="opacity-70">{{ i18n.t('history.chart.noData') }}</div>
         } @else if (t.downtimeMs > 0) {
-          <div>ოფლაინ {{ formatDuration(t.downtimeMs) }} · {{ t.count }}-ჯერ</div>
+          <div>{{ i18n.t('history.chart.offline', { time: i18n.duration(t.downtimeMs), count: t.count }) }}</div>
         } @else {
-          <div class="opacity-70">გათიშვა არ ყოფილა</div>
+          <div class="opacity-70">{{ i18n.t('history.chart.none') }}</div>
         }
       </div>
     }
@@ -60,7 +60,7 @@
           [class.-translate-x-full!]="b.i === bars().length - 1 && b.i !== 0"
           [style.left.%]="b.i === 0 ? 0 : b.i === bars().length - 1 ? 100 : ((b.i + 0.5) / bars().length) * 100"
         >
-          {{ b.date | date: 'd MMM' }}
+          {{ i18n.date(b.date, 'day') }}
         </span>
       }
     }

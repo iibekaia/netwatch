@@ -5,7 +5,8 @@ import { LanService } from './core/lan.service';
 import { ToastService } from './core/toast.service';
 import { UpdateService } from './core/update.service';
 import { AutostartService } from './core/autostart.service';
-import { formatDuration, reasonText } from './shared/format';
+import { I18nService } from './core/i18n.service';
+import { Lang } from './core/netwatch.types';
 import { AppTab, TabNav } from './layout/tab-nav/tab-nav';
 import { Toasts } from './layout/toasts/toasts';
 import { UpdateBanner } from './layout/update-banner/update-banner';
@@ -14,7 +15,7 @@ import { LanTab } from './features/lan/lan-tab/lan-tab';
 import { SpeedTab } from './features/speed/speed-tab/speed-tab';
 import { HistoryTab } from './features/history/history-tab/history-tab';
 
-/** აპის ჩარჩო: header, ტაბები, აქტიური ტაბის შიგთავსი, footer, toast-ები */
+/** აპის ჩარჩო: header (ენა, სტატუსი), ტაბები, აქტიური ტაბის შიგთავსი, footer, toast-ები */
 @Component({
   selector: 'app-root',
   imports: [Icon, TabNav, Toasts, UpdateBanner, StatusTab, LanTab, SpeedTab, HistoryTab],
@@ -26,6 +27,7 @@ export class App {
   protected readonly lan = inject(LanService);
   protected readonly update = inject(UpdateService);
   protected readonly autostart = inject(AutostartService);
+  protected readonly i18n = inject(I18nService);
   // სიჩქარე — პირველი ტაბი; ბრაუზერის რეჟიმში (Electron-ის გარეშე) მხოლოდ კავშირი მუშაობს
   protected readonly tab = signal<AppTab>(window.netwatch ? 'speed' : 'status');
   protected readonly versions = window.netwatch?.versions;
@@ -33,7 +35,7 @@ export class App {
   /** header-ის პატარა ინდიკატორი */
   protected readonly statusText = computed(() => {
     const online = this.conn.online();
-    return online === null ? 'მოწმდება' : online ? 'ონლაინ' : 'ოფლაინ';
+    return this.i18n.t(online === null ? 'status.checking' : online ? 'status.online' : 'status.offline');
   });
   protected readonly statusDot = computed(() => {
     const online = this.conn.online();
@@ -45,19 +47,27 @@ export class App {
   constructor() {
     // ───────── ჰენდლერები ─────────
     const offOffline = this.conn.onOffline((status) => {
-      console.warn('[App] ინტერნეტი გაითიშა', status);
-      this.toast.show(false, `ინტერნეტი გაითიშა — ${reasonText(status.reason)}`);
+      console.warn('[App] offline', status);
+      this.toast.show(false, this.i18n.t('toast.offline', { reason: this.i18n.reason(status.reason) }));
     });
 
     const offOnline = this.conn.onOnline((status, prev) => {
-      console.info('[App] ინტერნეტი ჩაირთო', status);
-      const downFor = prev ? ` (გათიშული იყო ${formatDuration(status.since - prev.since)})` : '';
-      this.toast.show(true, `ინტერნეტი ჩაირთო${downFor}`);
+      console.info('[App] online', status);
+      this.toast.show(
+        true,
+        prev
+          ? this.i18n.t('toast.onlineAfter', { time: this.i18n.duration(status.since - prev.since) })
+          : this.i18n.t('toast.online')
+      );
     });
 
     inject(DestroyRef).onDestroy(() => {
       offOffline();
       offOnline();
     });
+  }
+
+  protected setLang(event: Event): void {
+    this.i18n.set((event.target as HTMLSelectElement).value as Lang);
   }
 }

@@ -64,12 +64,16 @@ function queryHistory(data, { from, to, now = Date.now() }) {
         durationMs,
         ongoing,
         reason,
-        cause: cause ?? null,
+        // მიზეზის კოდი (diag.verdict.<code>); ძველ ჩანაწერებში ტექსტი იყო — მაშინ failedAt-იდან
+        cause: CODES.has(cause) ? cause : codeFor(failedAt),
         failedAt: failedAt ?? null,
         unknownEnd: !!unknownEnd,
       })),
   };
 }
+
+const { codeFor } = require('./diagnostics');
+const CODES = new Set(['adapter-off', 'adapter-dhcp', 'router', 'internet', 'dns-server', 'dns', 'captive', 'web']);
 
 function startOfDay(t) {
   const d = new Date(t);

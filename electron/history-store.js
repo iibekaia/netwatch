@@ -86,7 +86,7 @@ class HistoryStore extends EventEmitter {
     if (!last || !verdict || verdict.level === 'ok') return;
     // მხოლოდ თუ ეს გათიშვა ახლახან დაიწყო ან ჯერ გრძელდება
     if (last.end !== null && Date.now() - last.end > 60 * 1000) return;
-    last.cause = verdict.title;
+    last.cause = verdict.code; // კოდი, არა ტექსტი — ითარგმნება ჩვენებისას (ენის შეცვლაც მოქმედებს)
     last.failedAt = verdict.failedAt;
     this._changed();
   }

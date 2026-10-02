@@ -8,10 +8,10 @@
   <div class="flex flex-wrap items-center gap-1.5">
     <span class="max-w-full truncate text-sm font-medium">{{ name() }}</span>
     @if (d.self) {
-      <span class="tag bg-accent/10 text-accent">ეს კომპიუტერი</span>
+      <span class="tag bg-accent/10 text-accent">{{ i18n.t('lan.thisComputer') }}</span>
     }
     @if (d.gateway) {
-      <span class="tag bg-subtle text-muted">როუტერი</span>
+      <span class="tag bg-subtle text-muted">{{ i18n.t('lan.router') }}</span>
     }
     @if (d.peer) {
       <span class="tag bg-ok/12 text-ok">NetWatch {{ d.peer.version }}</span>

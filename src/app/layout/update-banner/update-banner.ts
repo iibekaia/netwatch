@@ -1,6 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { UpdateService } from '../../core/update.service';
 import { Icon } from '../../shared/icon';
+import { I18nService } from '../../core/i18n.service';
 
 /**
  * ახალი ვერსიის ბანერი (header-ის ქვეშ):
@@ -36,7 +37,7 @@ import { Icon } from '../../shared/icon';
         class="h-8 shrink-0 rounded-lg bg-text px-3 text-[13px] font-medium text-bg transition hover:opacity-90"
         (click)="update.install()"
       >
-        {{ s.status === 'downloaded' ? 'გადატვირთვა' : 'გადმოწერა' }}
+        {{ i18n.t(s.status === 'downloaded' ? 'update.restart' : 'update.download') }}
       </button>
     }
   `,
@@ -47,22 +48,24 @@ import { Icon } from '../../shared/icon';
 })
 export class UpdateBanner {
   protected readonly update = inject(UpdateService);
+  protected readonly i18n = inject(I18nService);
 
   protected readonly title = computed(() => {
     const s = this.update.state();
+    const version = s?.version ?? '';
     switch (s?.status) {
       case 'downloading':
-        return `ვერსია ${s.version} იწერება… ${s.progress ?? 0}%`;
+        return this.i18n.t('update.downloading', { version, progress: s.progress ?? 0 });
       case 'downloaded':
-        return `ვერსია ${s.version} მზადაა`;
+        return this.i18n.t('update.ready', { version });
       default:
-        return `ხელმისაწვდომია ვერსია ${s?.version}`;
+        return this.i18n.t('update.available', { version });
     }
   });
 
   protected readonly subtitle = computed(() =>
     this.update.state()?.status === 'downloaded'
-      ? 'დაყენდება გადატვირთვისას ან აპის შემდეგ დახურვაზე'
-      : `ახლა გაქვს ${this.update.state()?.currentVersion}`
+      ? this.i18n.t('update.installLater')
+      : this.i18n.t('update.current', { version: this.update.state()?.currentVersion ?? '' })
   );
 }

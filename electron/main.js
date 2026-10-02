@@ -14,6 +14,7 @@ const historyExport = require('./history-export');
 const autostart = require('./autostart');
 const { AppTray } = require('./tray');
 const { Settings } = require('./settings');
+const { i18n, SUPPORTED, LOCALES } = require('./i18n');
 
 // ერთი ასლი: NetWatch-ს თუ ხელახლა გაუშვებენ (ან ავტომატურ ჩართვასთან ერთად) —
 // მეორე არ იხსნება, პირველის ფანჯარა ჩნდება
@@ -41,6 +42,14 @@ let win = null;
 let tray = null;
 const settings = new Settings(path.join(app.getPath('userData'), 'settings.json'));
 
+// ენა: შენახული არჩევანი, ან — რეგიონის/სისტემის მიხედვით (electron/i18n.js)
+// ready-მდე app.getPreferredSystemLanguages() შეიძლება ცარიელი იყოს — init ხელახლა whenReady-ში
+i18n.on('change', (lang) => {
+  settings.set('lang', lang);
+  updateWindowTitle();
+  if (win && !win.isDestroyed()) win.webContents.send('i18n:changed', lang);
+});
+
 // გათიშვების ისტორია დისკზე: %APPDATA%\NetWatch\history.json
 const history = new HistoryStore(path.join(app.getPath('userData'), 'history.json'));
 history.on('change', () => {
@@ -62,16 +71,21 @@ function handleOffline(status, prev) {
     history.annotate(v); // მიზეზი ისტორიაშიც — საჩივრისთვის
     // პირველ შემოწმებაზე (როცა წინა მდგომარეობა უცნობია) შეტყობინებას არ ვაჩვენებთ
     if (prev.online === null) return;
-    if (v && v.level !== 'ok') notify(`ინტერნეტი გაითიშა — ${v.title}`, v.advice);
-    else notify('ინტერნეტი გაითიშა', 'კავშირი დაიკარგა. ველოდები აღდგენას…');
+    if (v && v.level !== 'ok') {
+      notify(
+        i18n.t('notify.offlineCause', { cause: i18n.t(`diag.verdict.${v.code}.title`) }),
+        i18n.t(`diag.verdict.${v.code}.advice`)
+      );
+    } else {
+      notify(i18n.t('notify.offline'), i18n.t('notify.offlineBody'));
+    }
   });
 }
 
 function handleOnline(status, prev) {
   console.log(`[netwatch] ✅ ინტერნეტი ჩაირთო (${status.latencyMs} ms)`);
   if (prev.online === false) {
-    const downFor = Math.round((status.since - prev.since) / 1000);
-    notify('ინტერნეტი აღდგა', `კავშირი არ იყო ${downFor} წამი.`);
+    notify(i18n.t('notify.online'), i18n.t('notify.onlineBody', { time: i18n.duration(status.since - prev.since) }));
   }
   win?.flashFrame(false);
   history.endOutage(status.since);
@@ -113,7 +127,7 @@ function diagnose(trigger) {
       const status = monitor.getStatus();
       if (status.online === false) {
         const v = diag.result?.verdict;
-        tray?.update(false, v && v.level !== 'ok' ? v.title : null);
+        tray?.update(false, v && v.level !== 'ok' ? `diag.verdict.${v.code}.title` : null);
       }
     });
   return diagRunning;
@@ -121,9 +135,9 @@ function diagnose(trigger) {
 
 function handleChange(status) {
   // tray: ფერი მაშინვე; მიზეზი — დიაგნოსტიკის დასრულებისას (იხ. diagnose)
-  tray?.update(status.online, status.online ? null : 'მიზეზი მოწმდება…');
+  tray?.update(status.online, status.online ? null : 'tray.checkingCause');
   if (!win || win.isDestroyed()) return;
-  win.setTitle(status.online ? 'NetWatch — ონლაინ' : 'NetWatch — ოფლაინ');
+  updateWindowTitle();
   win.webContents.send('net:change', status);
 }
 
@@ -252,6 +266,24 @@ ipcMain.handle('update:get', () => updater.state);
 ipcMain.handle('update:check', () => updater.check());
 ipcMain.on('update:install', () => updater.install());
 ipcMain.on('devtools:toggle', () => win?.webContents.toggleDevTools());
+// ენა — preload-ი სინქრონულად იღებს, რომ პირველივე კადრი სწორ ენაზე იყოს
+ipcMain.on('i18n:initial', (event) => {
+  event.returnValue = {
+    lang: i18n.lang,
+    languages: SUPPORTED.map((code) => ({ code, name: LOCALES[code].meta.native })),
+  };
+});
+ipcMain.handle('i18n:set', (_e, lang) => {
+  i18n.set(lang);
+  return i18n.lang;
+});
+
+function updateWindowTitle() {
+  if (!win || win.isDestroyed()) return;
+  const online = monitor.getStatus().online;
+  win.setTitle(online === null ? 'NetWatch' : i18n.t(online ? 'window.online' : 'window.offline'));
+}
+
 ipcMain.handle('autostart:get', () => ({ supported: autostart.supported(), enabled: autostart.isEnabled() }));
 ipcMain.handle('autostart:set', (_e, enabled) => setAutostart(enabled));
 
@@ -336,8 +368,8 @@ function createWindow({ show = true } = {}) {
     if (!settings.get('trayHintShown', false)) {
       settings.set('trayHintShown', true);
       notify(
-        'NetWatch ფონზე მუშაობს',
-        'ინტერნეტს კვლავ ამოწმებს. გასახსნელად ან გასასვლელად — იკონკა საათის გვერდით.'
+        i18n.t('notify.bgTitle'),
+        i18n.t('notify.bgBody')
       );
     }
   });
@@ -375,6 +407,10 @@ if (process.platform === 'win32') app.setAppUserModelId('com.iibekaia.netwatch')
 
 app.whenReady().then(() => {
   if (!isPrimary) return; // მეორე ასლი — უკვე იხურება
+
+  // ენა — ფანჯრამდე. ავტომატურად განსაზღვრული არ ინახება: თუ მომხმარებელს არ აურჩევია,
+  // სისტემის/რეგიონის ცვლილება შემდეგ გაშვებაზეც აისახება
+  i18n.init(settings.get('lang'));
 
   // პირველი გაშვება (დაყენებული აპი): კომპიუტერთან ერთად ჩართვა ნაგულისხმევად ჩართულია —
   // მონიტორი მაშინ მუშაობს, როცა ფანჯარა დახურულია; გამორთვა — tray-ის მენიუდან ან footer-იდან
@@ -440,7 +476,7 @@ async function exportHistory({ format, from, to, periodLabel }) {
   const report = queryHistory(history.snapshot(), { from, to });
   const stamp = historyExport.dateTime(Date.now()).slice(0, 10);
   const { canceled, filePath } = await dialog.showSaveDialog(win, {
-    title: format === 'pdf' ? 'ანგარიშის შენახვა (PDF)' : 'ისტორიის შენახვა (CSV)',
+    title: i18n.t(format === 'pdf' ? 'dialog.savePdf' : 'dialog.saveCsv'),
     defaultPath: path.join(app.getPath('documents'), `netwatch-${format === 'pdf' ? 'report' : 'outages'}-${stamp}.${format}`),
     filters: [format === 'pdf' ? { name: 'PDF', extensions: ['pdf'] } : { name: 'CSV', extensions: ['csv'] }],
   });

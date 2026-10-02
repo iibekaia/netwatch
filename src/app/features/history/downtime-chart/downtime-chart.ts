@@ -1,7 +1,6 @@
-import { Component, computed, input, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { HistoryReport } from '../../../core/netwatch.types';
-import { formatDuration } from '../../../shared/format';
+import { I18nService } from '../../../core/i18n.service';
 
 type Day = HistoryReport['days'][number];
 
@@ -12,7 +11,6 @@ type Day = HistoryReport['days'][number];
  */
 @Component({
   selector: 'app-downtime-chart',
-  imports: [DatePipe],
   templateUrl: './downtime-chart.html',
   host: { class: 'block' },
 })
@@ -20,7 +18,7 @@ export class DowntimeChart {
   readonly days = input.required<Day[]>();
 
   protected readonly hovered = signal<number | null>(null);
-  protected readonly formatDuration = formatDuration;
+  protected readonly i18n = inject(I18nService);
 
   /** y-ღერძის მაქსიმუმი წუთებში — "ლამაზ" რიცხვამდე დამრგვალებული */
   protected readonly maxMin = computed(() => {
@@ -48,6 +46,6 @@ export class DowntimeChart {
   });
 
   protected axisLabel(min: number): string {
-    return min >= 60 ? `${Math.round(min / 60)} სთ` : `${min} წთ`;
+    return min >= 60 ? this.i18n.t('history.axisH', { n: Math.round(min / 60) }) : this.i18n.t('history.axisM', { n: min });
   }
 }

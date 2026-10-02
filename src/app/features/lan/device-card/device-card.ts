@@ -1,6 +1,7 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { LanDevice } from '../../../core/netwatch.types';
 import { Icon, IconName } from '../../../shared/icon';
+import { I18nService } from '../../../core/i18n.service';
 
 const PLATFORMS: Record<string, string> = { win32: 'Windows', darwin: 'macOS', linux: 'Linux' };
 const PHONE_NAME = /iphone|ipad|android|galaxy|redmi|pixel/i;
@@ -19,6 +20,7 @@ const COMPUTER_NAME = /^mac\b|macbook|imac|desktop|laptop|^pc\b|-pc\b/i;
 })
 export class DeviceCard {
   readonly device = input.required<LanDevice>();
+  protected readonly i18n = inject(I18nService);
 
   protected readonly name = computed(() => {
     const d = this.device();
@@ -26,7 +28,7 @@ export class DeviceCard {
       d.peer?.host ||
       d.netbiosName ||
       d.hostname ||
-      (d.gateway ? 'როუტერი' : d.randomMac ? 'ტელეფონი / პლანშეტი' : 'უცნობი მოწყობილობა')
+      this.i18n.t(d.gateway ? 'lan.router' : d.randomMac ? 'lan.phoneTablet' : 'lan.unknown')
     );
   });
 
@@ -52,8 +54,8 @@ export class DeviceCard {
     const parts: string[] = [];
     if (d.hostname && d.hostname !== title) parts.push(`DNS: ${d.hostname}`);
     if (d.netbiosName && d.netbiosName !== title) parts.push(`NetBIOS: ${d.netbiosName}`);
-    if (d.workgroup) parts.push(`ჯგუფი: ${d.workgroup}`);
-    if (d.randomMac) parts.push('შემთხვევითი MAC');
+    if (d.workgroup) parts.push(this.i18n.t('lan.group', { name: d.workgroup }));
+    if (d.randomMac) parts.push(this.i18n.t('lan.randomMac'));
     return parts.join(' · ');
   });
 

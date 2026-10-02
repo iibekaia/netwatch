@@ -1,10 +1,10 @@
-<h2 class="section-title mb-2.5 px-1">წინა გაზომვები</h2>
+<h2 class="section-title mb-2.5 px-1">{{ i18n.t('speed.history') }}</h2>
 
 <div class="card overflow-hidden p-0">
   <table class="w-full text-[13px] tabular-nums">
     <thead>
       <tr class="text-xs text-muted [&>th]:px-4 [&>th]:py-2.5 [&>th]:text-right [&>th]:font-normal">
-        <th class="text-left!">დრო</th>
+        <th class="text-left!">{{ i18n.t('speed.time') }}</th>
         <th>↓ Mbps</th>
         <th>↑ Mbps</th>
         <th>Ping</th>
@@ -13,7 +13,7 @@
     <tbody class="divide-y divide-border border-t border-border">
       @for (r of results(); track r.at) {
         <tr class="[&>td]:px-4 [&>td]:py-2.5 [&>td]:text-right">
-          <td class="text-left! text-muted">{{ r.at | date: 'dd.MM HH:mm' }}</td>
+          <td class="text-left! text-muted">{{ i18n.date(r.at, 'short') }}</td>
           <td class="font-medium">{{ r.download }}</td>
           <td class="font-medium">{{ r.upload }}</td>
           <td class="text-muted">{{ r.ping }} ms</td>

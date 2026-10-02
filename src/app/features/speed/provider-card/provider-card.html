@@ -3,9 +3,9 @@
     <app-icon name="globe" class="size-5" />
   </span>
   <div class="flex min-w-0 flex-1 flex-col">
-    <span class="caption">პროვაიდერი</span>
+    <span class="caption">{{ i18n.t('speed.provider') }}</span>
     <strong class="truncate text-base font-semibold tracking-tight">
-      {{ provider()?.isp ?? (loading() ? 'იტვირთება…' : '—') }}
+      {{ provider()?.isp ?? (loading() ? i18n.t('speed.loading') : '—') }}
     </strong>
     @if (provider()?.network; as network) {
       <span class="truncate text-xs text-muted">{{ network }}</span>
@@ -13,7 +13,7 @@
   </div>
   <button
     class="grid size-8 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-subtle hover:text-text"
-    title="განახლება"
+    [title]="i18n.t('speed.refresh')"
     (click)="refresh.emit()"
     [disabled]="loading()"
   >

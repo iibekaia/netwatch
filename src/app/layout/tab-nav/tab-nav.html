@@ -2,21 +2,20 @@
   @let selected = active() === t.id;
   <button
     role="tab"
-    class="flex h-9 items-center justify-center gap-1.5 rounded-[10px] text-[13px] font-medium transition"
+    class="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-[10px] px-1.5 text-[13px] font-medium transition"
     [class]="selected ? 'bg-raised text-text shadow-soft' : 'text-muted hover:text-text'"
     [attr.aria-selected]="selected"
     (click)="active.set(t.id)"
   >
     <app-icon [name]="t.icon" class="size-4" />
-    {{ t.label }}
+    <span class="truncate">{{ i18n.t('tabs.' + t.id) }}</span>
 
     @switch (t.id) {
       @case ('lan') {
-        @if (lan.devices().length) {
-          <span class="badge bg-border/70 text-muted">{{ lan.devices().length }}</span>
-        }
+        <!-- მოწყობილობების რაოდენობა ტაბის შიგნით ჩანს; აქ — მხოლოდ NetWatch-ის მომხმარებლები
+             (გრძელ ენებზე, მაგ. უკრაინულზე, სახელი რომ არ მოიჭრას) -->
         @if (lan.peerCount()) {
-          <span class="badge bg-ok/12 text-ok" title="NetWatch-ის მომხმარებლები">{{ lan.peerCount() }}</span>
+          <span class="badge bg-ok/12 text-ok" [title]="i18n.t('tabs.peers')">{{ lan.peerCount() }}</span>
         }
       }
       @case ('speed') {

@@ -1,33 +1,35 @@
 const fs = require('fs');
 const path = require('path');
 const { BrowserWindow } = require('electron');
+const { i18n } = require('./i18n');
 
 /**
- * ისტორიის ექსპორტი (main process):
- *  - CSV — ყველა გათიშვა ცხრილად (Excel-ი ქართულს სწორად კითხულობს — UTF-8 BOM)
+ * ისტორიის ექსპორტი (main process) — აპის მიმდინარე ენაზე:
+ *  - CSV — ყველა გათიშვა ცხრილად (Excel-ი UTF-8-ს სწორად კითხულობს — BOM)
  *  - PDF — ანგარიში პროვაიდერთან საჩივრისთვის: შეჯამება, დღიური გრაფიკი, გათიშვების სია.
- *          იქმნება უხილავ ფანჯარაში printToPDF-ით; ქართული ფონტი ფაილშივეა ჩაშენებული.
+ *          იქმნება უხილავ ფანჯარაში printToPDF-ით; ფონტები (ქართული + კირილიცა) ფაილშივეა ჩაშენებული.
  */
 
-const MONTHS = ['იან', 'თებ', 'მარ', 'აპრ', 'მაი', 'ივნ', 'ივლ', 'აგვ', 'სექ', 'ოქტ', 'ნოე', 'დეკ'];
-const REASONS = {
-  unreachable: 'ქსელი არის, ინტერნეტი — არა',
-  'no-network': 'ქსელთან კავშირი არ არის',
-  'browser-event': 'სისტემის სიგნალი',
-};
+const t = (key, params) => i18n.t(key, params);
+
+/** მიზეზი: დიაგნოსტიკის დასკვნა (კოდით) ან, თუ არ არის, შემოწმების მიზეზი */
+function causeText(o) {
+  if (o.cause) return t(`diag.verdict.${o.cause}.title`);
+  return t(`reason.${o.reason}`) === `reason.${o.reason}` ? '' : t(`reason.${o.reason}`);
+}
 
 // ───────── CSV ─────────
 
 function toCsv(report) {
-  const header = ['დაწყება', 'დასრულება', 'ხანგრძლივობა (წამი)', 'ხანგრძლივობა', 'მიზეზი', 'დიაგნოსტიკა', 'შენიშვნა'];
+  const header = ['start', 'end', 'durationSec', 'duration', 'reason', 'diagnosis', 'note'].map((k) => t(`csv.${k}`));
   const rows = [...report.outages].reverse().map((o) => [
     dateTime(o.start),
     o.ongoing ? '' : dateTime(o.end),
     Math.round(o.durationMs / 1000),
-    duration(o.durationMs),
-    REASONS[o.reason] ?? o.reason ?? '',
-    o.cause ?? '',
-    o.ongoing ? 'ჯერ გრძელდება' : o.unknownEnd ? 'აპი დაიხურა გათიშვის დროს — დასასრული მიახლოებითია' : '',
+    i18n.duration(o.durationMs),
+    o.reason && t(`reason.${o.reason}`) !== `reason.${o.reason}` ? t(`reason.${o.reason}`) : '',
+    o.cause ? t(`diag.verdict.${o.cause}.title`) : '',
+    o.ongoing ? t('csv.ongoing') : o.unknownEnd ? t('csv.approx') : '',
   ]);
   const esc = (v) => {
     const s = String(v);
@@ -58,33 +60,31 @@ async function toPdf(report, meta) {
 function reportHtml({ summary: s, days, outages }, meta) {
   const sentence =
     s.count === 0
-      ? 'ამ პერიოდში ინტერნეტი არ გათიშულა.'
-      : `ამ პერიოდში ინტერნეტი <b>${s.count}-ჯერ გაითიშა</b>, ჯამში <b>${duration(s.downtimeMs)}</b>.` +
-        (s.providerCount
-          ? ` მათგან <b>${s.providerCount}</b> — პროვაიდერის მხარეს (როუტერი მუშაობდა, ინტერნეტი — არა).`
-          : '');
+      ? t('report.none')
+      : t('report.sentence', { count: s.count, total: i18n.duration(s.downtimeMs) }) +
+        (s.providerCount ? t('report.providerPart', { count: s.providerCount }) : '');
 
   const stats = [
-    ['Uptime', s.uptimePct === null ? '—' : `${s.uptimePct.toFixed(2)}%`],
-    ['გათიშვები', s.count],
-    ['ჯამური ოფლაინ დრო', duration(s.downtimeMs)],
-    ['ყველაზე ხანგრძლივი', s.longestMs ? `${duration(s.longestMs)}` : '—'],
-    ['საშუალო ხანგრძლივობა', s.count ? duration(s.avgMs) : '—'],
-    ['მონიტორინგის დრო', duration(s.monitoredMs)],
+    [t('report.stats.uptime'), s.uptimePct === null ? '—' : `${s.uptimePct.toFixed(2)}%`],
+    [t('report.stats.outages'), s.count],
+    [t('report.stats.total'), i18n.duration(s.downtimeMs)],
+    [t('report.stats.longest'), s.longestMs ? i18n.duration(s.longestMs) : '—'],
+    [t('report.stats.average'), s.count ? i18n.duration(s.avgMs) : '—'],
+    [t('report.stats.monitored'), i18n.duration(s.monitoredMs)],
   ];
 
   const metaRows = [
-    ['პერიოდი', `${day(s.from)} – ${day(s.to - 1)}`],
-    ['პროვაიდერი', meta.isp ?? '—'],
-    ['საჯარო IP', meta.ip ?? '—'],
-    ['კომპიუტერი', meta.host ?? '—'],
-    ['შექმნილია', dateTime(Date.now())],
+    [t('report.period'), `${i18n.day(s.from, { year: true })} – ${i18n.day(s.to - 1, { year: true })}`],
+    [t('report.provider'), meta.isp ?? '—'],
+    [t('report.ip'), meta.ip ?? '—'],
+    [t('report.computer'), meta.host ?? '—'],
+    [t('report.created'), dateTime(Date.now())],
   ];
 
-  return `<!doctype html><html lang="ka"><head><meta charset="utf-8"><style>
+  return `<!doctype html><html lang="${i18n.lang}"><head><meta charset="utf-8"><style>
 ${fontFaces()}
 * { box-sizing: border-box; }
-body { margin: 0; font: 11px/1.5 'NotoGeo', sans-serif; color: #18181b; }
+body { margin: 0; font: 11px/1.5 'NotoGeo', 'NotoSans', sans-serif; color: #18181b; }
 h1 { font-size: 20px; margin: 0 0 2px; letter-spacing: -0.01em; }
 h2 { font-size: 13px; margin: 22px 0 8px; }
 .sub { color: #71717a; margin: 0 0 16px; }
@@ -104,32 +104,30 @@ tr { break-inside: avoid; }
 .note { color: #71717a; font-size: 9.5px; margin-top: 18px; }
 .tag { color: #b91c1c; }
 </style></head><body>
-<h1>ინტერნეტ-კავშირის ანგარიში</h1>
+<h1>${esc(t('report.title'))}</h1>
 <p class="sub">NetWatch · ${esc(meta.periodLabel ?? '')}</p>
-<dl class="meta">${metaRows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+<dl class="meta">${metaRows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
 <p class="lead">${sentence}</p>
-<div class="stats">${stats.map(([k, v]) => `<div class="stat"><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>
+<div class="stats">${stats.map(([k, v]) => `<div class="stat"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>
 
-${days.length > 1 ? `<h2>ოფლაინ დრო დღეების მიხედვით (წუთი)</h2>${chartSvg(days)}` : ''}
+${days.length > 1 ? `<h2>${esc(t('report.chartTitle'))}</h2>${chartSvg(days)}` : ''}
 
-<h2>გათიშვების სია (${outages.length})</h2>
+<h2>${esc(t('report.listTitle', { count: outages.length }))}</h2>
 ${
   outages.length
-    ? `<table><thead><tr><th>დაწყება</th><th>დასრულება</th><th class="num">ხანგრძლივობა</th><th>მიზეზი / დიაგნოსტიკა</th></tr></thead><tbody>
+    ? `<table><thead><tr><th>${esc(t('report.col.start'))}</th><th>${esc(t('report.col.end'))}</th><th class="num">${esc(t('report.col.duration'))}</th><th>${esc(t('report.col.cause'))}</th></tr></thead><tbody>
 ${[...outages]
   .reverse()
   .map(
-    (o) => `<tr><td>${dateTime(o.start)}</td><td>${o.ongoing ? '<span class="tag">გრძელდება</span>' : dateTime(o.end) + (o.unknownEnd ? ' *' : '')}</td>
-<td class="num">${duration(o.durationMs)}</td><td>${esc(o.cause ?? REASONS[o.reason] ?? '')}</td></tr>`
+    (o) => `<tr><td>${dateTime(o.start)}</td><td>${o.ongoing ? `<span class="tag">${esc(t('report.ongoing'))}</span>` : dateTime(o.end) + (o.unknownEnd ? ' *' : '')}</td>
+<td class="num">${esc(i18n.duration(o.durationMs))}</td><td>${esc(causeText(o))}</td></tr>`
   )
   .join('')}
 </tbody></table>`
-    : '<p>გათიშვა არ დაფიქსირებულა.</p>'
+    : `<p>${esc(t('report.noneList'))}</p>`
 }
-<p class="note">Uptime ითვლება მხოლოდ იმ დროზე, როცა NetWatch მუშაობდა (${duration(s.monitoredMs)}); კომპიუტრის
-გამორთვის/ძილის დრო არ ითვლება. ინტერნეტი მოწმდება ყოველ 1–2 წამში რამდენიმე საჯარო სერვერთან.
-დიაგნოსტიკა ამოწმებს როუტერს, საჯარო IP-ებს (1.1.1.1, 8.8.8.8), DNS-ს და HTTP-ს.${
-    outages.some((o) => o.unknownEnd) ? '<br>* აპი დაიხურა გათიშვის დროს — დასასრული მიახლოებითია.' : ''
+<p class="note">${esc(t('report.note', { time: i18n.duration(s.monitoredMs) }))}${
+    outages.some((o) => o.unknownEnd) ? `<br>${esc(t('report.approx'))}` : ''
   }</p>
 </body></html>`;
 }
@@ -157,7 +155,7 @@ function chartSvg(days) {
     .map((d, i) =>
       (i % labelEvery === 0 && days.length - 1 - i >= labelEvery / 2) || i === days.length - 1
         ? // პირველი/ბოლო წარწერა კიდეზეა გასწორებული, რომ არ მოიჭრას
-          `<text x="${i === 0 ? padL : i === days.length - 1 ? W : padL + i * step + bw / 2}" y="${H - 4}" font-size="9" fill="#71717a" text-anchor="${i === 0 ? 'start' : i === days.length - 1 ? 'end' : 'middle'}">${shortDay(d.date)}</text>`
+          `<text x="${i === 0 ? padL : i === days.length - 1 ? W : padL + i * step + bw / 2}" y="${H - 4}" font-size="9" fill="#71717a" text-anchor="${i === 0 ? 'start' : i === days.length - 1 ? 'end' : 'middle'}">${esc(i18n.day(d.date))}</text>`
         : ''
     )
     .join('');
@@ -168,49 +166,34 @@ function chartSvg(days) {
 ${bars}${labels}</svg>`;
 }
 
+/** ფონტები PDF-ში ჩაშენებით: ქართული (Noto Sans Georgian) + ლათინური/კირილიცა (Noto Sans) */
 function fontFaces() {
   const media = path.join(__dirname, '..', 'dist', 'netwatch', 'browser', 'media');
   let files = [];
   try {
-    files = fs.readdirSync(media).filter((f) => /noto-sans-georgian-(georgian|latin)-wght/.test(f));
+    files = fs.readdirSync(media);
   } catch {
     return '';
   }
-  return files
-    .map((f) => {
-      const b64 = fs.readFileSync(path.join(media, f)).toString('base64');
-      return `@font-face { font-family: 'NotoGeo'; font-weight: 100 900; src: url(data:font/woff2;base64,${b64}) format('woff2'); }`;
-    })
-    .join('\n');
+  const face = (family, file) =>
+    `@font-face { font-family: '${family}'; font-weight: 100 900; src: url(data:font/woff2;base64,${fs
+      .readFileSync(path.join(media, file))
+      .toString('base64')}) format('woff2'); }`;
+  return [
+    ...files.filter((f) => /^noto-sans-georgian-(georgian|latin)-wght/.test(f)).map((f) => face('NotoGeo', f)),
+    // უკრაინული — კირილიცა
+    ...files.filter((f) => /^noto-sans-(cyrillic|cyrillic-ext)-wght/.test(f)).map((f) => face('NotoSans', f)),
+  ].join('\n');
 }
 
 // ───────── ფორმატირება ─────────
 
 const pad = (n) => String(n).padStart(2, '0');
 
-function dateTime(t) {
-  const d = new Date(t);
+/** ენისგან დამოუკიდებელი (ISO-ს მსგავსი) — ცხრილში და Excel-ში ერთნაირად იკითხება */
+function dateTime(ts) {
+  const d = new Date(ts);
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-}
-
-function day(t) {
-  const d = new Date(t);
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-}
-
-function shortDay(t) {
-  const d = new Date(t);
-  return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
-}
-
-function duration(ms) {
-  const total = Math.round(ms / 1000);
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  if (h) return m ? `${h} სთ ${m} წთ` : `${h} სთ`;
-  if (m) return s ? `${m} წთ ${s} წმ` : `${m} წთ`;
-  return `${s} წმ`;
 }
 
 function esc(v) {

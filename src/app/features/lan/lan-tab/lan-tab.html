@@ -1,10 +1,10 @@
 <div class="flex items-end justify-between gap-3 px-1">
   <div class="min-w-0">
     <p class="text-[15px] font-medium">
-      {{ lan.devices().length }} მოწყობილობა
+      {{ i18n.t('lan.devices', { count: lan.devices().length }) }}
       @if (lan.peerCount()) {
         <span class="text-muted"> · </span>
-        <span class="text-ok">{{ lan.peerCount() }} NetWatch-ით</span>
+        <span class="text-ok">{{ i18n.t('lan.withNetWatch', { count: lan.peerCount() }) }}</span>
       }
     </p>
     <p class="mt-0.5 flex flex-wrap gap-x-2 text-xs text-muted">
@@ -12,13 +12,13 @@
         <span>{{ s.network }}/{{ prefix(s.netmask) }} · {{ s.iface }}</span>
       }
       @if (lan.state()?.scannedAt; as at) {
-        <span>· {{ at | date: 'HH:mm:ss' }}</span>
+        <span>· {{ i18n.date(at, 'time') }}</span>
       }
     </p>
   </div>
   <button class="btn-soft" (click)="lan.scan()" [disabled]="lan.scanning()">
     <app-icon name="refresh" class="size-3.5" [class.animate-spin]="lan.scanning()" />
-    {{ lan.scanning() ? 'სკანირება…' : 'სკანირება' }}
+    {{ i18n.t(lan.scanning() ? 'lan.scanning' : 'lan.scan') }}
   </button>
 </div>
 
@@ -30,11 +30,11 @@
   </ul>
 } @else {
   <p class="empty-state">
-    {{ lan.scanning() ? 'ქსელი სკანირდება…' : 'მოწყობილობები ვერ მოიძებნა' }}
+    {{ i18n.t(lan.scanning() ? 'lan.scanningNetwork' : 'lan.empty') }}
   </p>
 }
 
 <p class="flex items-center justify-center gap-1.5 text-[11px] text-muted">
   <span class="size-1.5 rounded-full bg-ok"></span>
-  NetWatch-ის მომხმარებელი. ძილის რეჟიმში მყოფი ტელეფონი შეიძლება ყოველთვის არ ჩანდეს.
+  {{ i18n.t('lan.hint') }}
 </p>

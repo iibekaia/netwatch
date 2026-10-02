@@ -5,8 +5,7 @@ import { formatNumber } from '../../../shared/format';
 import { ProviderCard } from '../provider-card/provider-card';
 import { SpeedHistory } from '../speed-history/speed-history';
 import { SpeedMeter } from '../speed-meter/speed-meter';
-
-const PHASE_LABELS = { ping: 'ping-ის გაზომვა', download: 'ჩამოტვირთვა', upload: 'ატვირთვა' };
+import { I18nService } from '../../../core/i18n.service';
 
 /** ტაბი „სიჩქარე“: პროვაიდერი, ping/jitter, ჩამოტვირთვა/ატვირთვა, ისტორია */
 @Component({
@@ -18,6 +17,7 @@ const PHASE_LABELS = { ping: 'ping-ის გაზომვა', download: 'ჩ
 export class SpeedTab {
   protected readonly conn = inject(ConnectionService);
   protected readonly speed = inject(SpeedService);
+  protected readonly i18n = inject(I18nService);
   protected readonly fmt = formatNumber;
 
   /** მთლიანი ტესტის პროგრესი: ping 10%, download 45%, upload 45% */
@@ -35,17 +35,19 @@ export class SpeedTab {
     }
   });
 
-  protected readonly phaseLabel = computed(() => PHASE_LABELS[this.speed.phase() ?? 'ping']);
+  protected readonly phaseLabel = computed(() => this.i18n.t('speed.phase.' + (this.speed.phase() ?? 'ping')));
 
   /** მოკლე შეფასება: რისთვის ჰყოფნის ეს ინტერნეტი */
   protected readonly verdict = computed(() => {
     const { download = 0, upload = 0, ping = 999 } = this.speed.live();
-    if (download >= 100 && upload >= 20 && ping <= 30)
-      return 'შესანიშნავი — 4K ვიდეო, თამაშები და დიდი ფაილები უპრობლემოდ.';
-    if (download >= 25 && upload >= 5 && ping <= 60)
-      return 'კარგი — HD ვიდეო, ვიდეოზარები და თამაშები ნორმალურად იმუშავებს.';
-    if (download >= 5 && ping <= 120)
-      return 'საშუალო — ბრაუზინგი და ვიდეოზარი, მაგრამ მაღალ ხარისხზე შეიძლება შეფერხდეს.';
-    return 'სუსტი — ვიდეო და ზარები შეიძლება ჭედავდეს.';
+    const level =
+      download >= 100 && upload >= 20 && ping <= 30
+        ? 'excellent'
+        : download >= 25 && upload >= 5 && ping <= 60
+          ? 'good'
+          : download >= 5 && ping <= 120
+            ? 'fair'
+            : 'poor';
+    return this.i18n.t('speed.verdict.' + level);
   });
 }

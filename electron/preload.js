@@ -27,6 +27,10 @@ contextBridge.exposeInMainWorld('netwatch', {
   getDiagnostics: () => ipcRenderer.invoke('diag:get'),
   runDiagnostics: () => ipcRenderer.invoke('diag:run'),
   onDiagnostics: (callback) => subscribe('diag:update', callback),
+  // ენა: სინქრონულად — რომ პირველივე კადრი სწორ ენაზე დაიხატოს
+  i18n: ipcRenderer.sendSync('i18n:initial'),
+  setLanguage: (lang) => ipcRenderer.invoke('i18n:set', lang),
+  onLanguage: (callback) => subscribe('i18n:changed', callback),
   getAutostart: () => ipcRenderer.invoke('autostart:get'),
   setAutostart: (enabled) => ipcRenderer.invoke('autostart:set', enabled),
   onAutostart: (callback) => subscribe('autostart:update', callback),

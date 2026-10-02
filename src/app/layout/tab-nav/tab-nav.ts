@@ -2,6 +2,7 @@ import { Component, inject, model } from '@angular/core';
 import { LanService } from '../../core/lan.service';
 import { SpeedService } from '../../core/speed.service';
 import { Icon, IconName } from '../../shared/icon';
+import { I18nService } from '../../core/i18n.service';
 
 export type AppTab = 'status' | 'lan' | 'speed' | 'history';
 
@@ -20,11 +21,13 @@ export class TabNav {
 
   protected readonly lan = inject(LanService);
   protected readonly speed = inject(SpeedService);
+  protected readonly i18n = inject(I18nService);
 
-  protected readonly tabs: { id: AppTab; label: string; icon: IconName }[] = [
-    { id: 'speed', label: 'სიჩქარე', icon: 'gauge' },
-    { id: 'status', label: 'კავშირი', icon: 'activity' },
-    { id: 'lan', label: 'ქსელი', icon: 'network' },
-    { id: 'history', label: 'ისტორია', icon: 'history' },
+  // სახელი — თარგმანის გასაღები (tabs.<id>)
+  protected readonly tabs: { id: AppTab; icon: IconName }[] = [
+    { id: 'speed', icon: 'gauge' },
+    { id: 'status', icon: 'activity' },
+    { id: 'lan', icon: 'network' },
+    { id: 'history', icon: 'history' },
   ];
 }

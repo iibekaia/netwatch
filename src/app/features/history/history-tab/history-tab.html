@@ -1,17 +1,17 @@
 @let s = summary();
 
 <!-- პერიოდი -->
-<div class="grid grid-cols-4 gap-1 rounded-xl bg-subtle p-1" role="radiogroup" aria-label="პერიოდი">
-  @for (p of periods; track p[0]) {
-    @let selected = history.period() === p[0];
+<div class="grid grid-cols-4 gap-1 rounded-xl bg-subtle p-1" role="radiogroup" [attr.aria-label]="i18n.t('history.period')">
+  @for (p of periods; track p) {
+    @let selected = history.period() === p;
     <button
       role="radio"
-      class="h-8 rounded-lg text-[12.5px] font-medium transition"
+      class="h-8 truncate rounded-lg px-1 text-[12.5px] font-medium transition"
       [class]="selected ? 'bg-raised text-text shadow-soft' : 'text-muted hover:text-text'"
       [attr.aria-checked]="selected"
-      (click)="history.setPeriod(p[0])"
+      (click)="history.setPeriod(p)"
     >
-      {{ p[1] }}
+      {{ i18n.t('history.periods.' + p) }}
     </button>
   }
 </div>
@@ -24,29 +24,29 @@
       <div class="flex flex-col gap-2">
         <span class="caption flex items-center gap-1.5">
           <span class="size-1.5 rounded-full" [class]="uptimeTone()"></span>
-          Uptime
+          {{ i18n.t('history.uptime') }}
         </span>
         <span class="stat">{{ uptime() }}</span>
       </div>
       <div class="flex flex-col gap-2">
-        <span class="caption">გათიშვები</span>
+        <span class="caption">{{ i18n.t('history.outages') }}</span>
         <span class="stat">
           {{ s.count }}
           @if (s.providerCount) {
-            <small>{{ s.providerCount }} პროვაიდერის მხარეს</small>
+            <small>{{ i18n.t('history.providerSide', { count: s.providerCount }) }}</small>
           }
         </span>
       </div>
       <div class="flex flex-col gap-2">
-        <span class="caption">ჯამში ოფლაინ</span>
-        <span class="text-lg font-semibold tracking-tight tabular-nums">{{ s.downtimeMs ? formatDuration(s.downtimeMs) : '—' }}</span>
+        <span class="caption">{{ i18n.t('history.totalOffline') }}</span>
+        <span class="text-lg font-semibold tracking-tight tabular-nums">{{ s.downtimeMs ? i18n.duration(s.downtimeMs) : '—' }}</span>
       </div>
       <div class="flex flex-col gap-2">
-        <span class="caption">ყველაზე ხანგრძლივი</span>
+        <span class="caption">{{ i18n.t('history.longest') }}</span>
         <span class="text-lg font-semibold tracking-tight tabular-nums">
-          {{ s.longestMs ? formatDuration(s.longestMs) : '—' }}
+          {{ s.longestMs ? i18n.duration(s.longestMs) : '—' }}
           @if (s.longestAt) {
-            <small class="ml-1 text-xs font-normal text-muted">{{ s.longestAt | date: 'd MMM' }}</small>
+            <small class="ml-1 text-xs font-normal text-muted">{{ i18n.date(s.longestAt, 'day') }}</small>
           }
         </span>
       </div>
@@ -54,13 +54,13 @@
 
     @if ((history.report()?.days?.length ?? 0) > 1) {
       <div class="border-t border-border pt-4">
-        <p class="caption mb-3">ოფლაინ დრო დღეების მიხედვით</p>
+        <p class="caption mb-3">{{ i18n.t('history.chartTitle') }}</p>
         <app-downtime-chart [days]="history.report()!.days" />
       </div>
     }
 
     <p class="text-[11px] text-muted/80">
-      მონიტორინგი: {{ formatDuration(s.monitoredMs) }} — კომპიუტრის გამორთვის და ძილის დრო არ ითვლება.
+      {{ i18n.t('history.monitored', { time: i18n.duration(s.monitoredMs) }) }}
     </p>
   </section>
 
@@ -68,19 +68,19 @@
   <div class="grid grid-cols-2 gap-2">
     <button class="btn-soft h-10 justify-center" (click)="export('pdf')" [disabled]="history.exporting()">
       <app-icon name="file-text" class="size-4" />
-      {{ history.exporting() === 'pdf' ? 'იქმნება…' : 'PDF ანგარიში' }}
+      {{ i18n.t(history.exporting() === 'pdf' ? 'history.creating' : 'history.pdf') }}
     </button>
     <button class="btn-soft h-10 justify-center" (click)="export('csv')" [disabled]="history.exporting()">
       <app-icon name="table" class="size-4" />
-      {{ history.exporting() === 'csv' ? 'იქმნება…' : 'CSV (Excel)' }}
+      {{ i18n.t(history.exporting() === 'csv' ? 'history.creating' : 'history.csv') }}
     </button>
   </div>
 
   <div class="mt-2 flex items-center justify-between px-1">
-    <h2 class="section-title">გათიშვები</h2>
+    <h2 class="section-title">{{ i18n.t('history.list') }}</h2>
     <button class="btn-link flex items-center gap-1" (click)="clear()">
       <app-icon name="trash" class="size-3.5" />
-      ისტორიის წაშლა
+      {{ i18n.t('history.clear') }}
     </button>
   </div>
   <app-outage-list [outages]="history.report()!.outages" />

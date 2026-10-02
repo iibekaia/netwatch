@@ -12,7 +12,7 @@
         · <span class="tabular-nums">{{ s.latencyMs }} ms</span>
       }
       @if (s.lastCheck) {
-        · შემოწმდა <span class="tabular-nums">{{ s.lastCheck | date: 'HH:mm:ss' }}</span>
+        · <span class="tabular-nums">{{ i18n.t('conn.checkedAt', { time: i18n.date(s.lastCheck, 'time') }) }}</span>
       }
     </p>
   </div>

@@ -19,14 +19,14 @@
     </div>
   </div>
 
-  <app-speed-meter label="ჩამოტვირთვა" icon="arrow-down" [value]="live.download" [active]="phase === 'download'" />
-  <app-speed-meter label="ატვირთვა" icon="arrow-up" color="ok" [value]="live.upload" [active]="phase === 'upload'" />
+  <app-speed-meter [label]="i18n.t('speed.download')" icon="arrow-down" [value]="live.download" [active]="phase === 'download'" />
+  <app-speed-meter [label]="i18n.t('speed.upload')" icon="arrow-up" color="ok" [value]="live.upload" [active]="phase === 'upload'" />
 
   @if (!speed.running() && live.download !== undefined) {
     <p class="rounded-xl bg-subtle px-3.5 py-2.5 text-[13px]">{{ verdict() }}</p>
   }
   @if (speed.error(); as err) {
-    <p class="rounded-xl bg-bad/10 px-3.5 py-2.5 text-[13px] text-bad">{{ err }}</p>
+    <p class="rounded-xl bg-bad/10 px-3.5 py-2.5 text-[13px] text-bad">{{ i18n.t(err) }}</p>
   }
 </div>
 
@@ -38,11 +38,11 @@
       [style.width.%]="overallProgress()"
       aria-hidden="true"
     ></span>
-    <span class="relative">გაჩერება · {{ phaseLabel() }}</span>
+    <span class="relative">{{ i18n.t('speed.stop', { phase: phaseLabel() }) }}</span>
   </button>
 } @else {
   <button class="btn-primary" (click)="speed.run()" [disabled]="conn.online() === false">
-    {{ speed.history().length ? 'თავიდან გაზომვა' : 'სიჩქარის გაზომვა' }}
+    {{ i18n.t(speed.history().length ? 'speed.again' : 'speed.measure') }}
   </button>
 }
 
@@ -51,6 +51,5 @@
 }
 
 <p class="px-4 text-center text-[11px] leading-relaxed text-muted">
-  ტესტი Cloudflare-ის უახლოეს სერვერთან ტარდება (დაახლ. 20 წამი) და სიჩქარის მიხედვით
-  რამდენიმე ათეულიდან რამდენიმე ასეულ MB-მდე ტრაფიკს ხარჯავს.
+  {{ i18n.t('speed.hint') }}
 </p>

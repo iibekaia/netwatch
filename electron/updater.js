@@ -110,7 +110,8 @@ class Updater extends EventEmitter {
 
   _fail(err) {
     console.warn('[updater]', err?.message ?? err);
-    this._set({ status: 'error', error: 'განახლების შემოწმება ვერ მოხერხდა', checkedAt: Date.now() });
+    // error — კოდი; ტექსტი UI-ში: update.error (locales)
+    this._set({ status: 'error', error: 'check-failed', checkedAt: Date.now() });
   }
 
   _set(patch) {

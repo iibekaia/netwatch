@@ -1,0 +1,186 @@
+{
+  "meta": { "native": "English", "dateLocale": "en-GB" },
+  "lang": { "label": "Language" },
+  "status": { "online": "Online", "offline": "Offline", "checking": "Checking" },
+  "tabs": { "speed": "Speed", "status": "Connection", "lan": "Network", "history": "History", "peers": "NetWatch users" },
+  "dur": { "hm": "{h}h {m}m", "h": "{h}h", "ms": "{m}m {s}s", "m": "{m}m", "s": "{s}s" },
+  "reason": {
+    "reachable": "Servers respond",
+    "unreachable": "Network is up, internet is not",
+    "no-network": "No network connection",
+    "browser-event": "System signal",
+    "checking": "Checking…"
+  },
+  "toast": {
+    "offline": "Internet disconnected — {reason}",
+    "online": "Internet connected",
+    "onlineAfter": "Internet connected (was down for {time})",
+    "saved": "{format} saved"
+  },
+  "footer": {
+    "autostart": "Start with computer (in the background, tray)",
+    "checking": "checking…",
+    "upToDate": "up to date",
+    "check": "Check",
+    "browserMode": "Browser mode — navigator.onLine only"
+  },
+  "update": {
+    "downloading": "Downloading version {version}… {progress}%",
+    "ready": "Version {version} is ready",
+    "available": "Version {version} is available",
+    "installLater": "Installs on restart or the next time the app closes",
+    "current": "You have {version}",
+    "restart": "Restart",
+    "download": "Download",
+    "error": "Couldn't check for updates"
+  },
+  "conn": { "onlineFor": "Online for {time}", "offlineFor": "Offline for {time}", "checking": "Checking…", "checkedAt": "checked {time}" },
+  "diag": {
+    "title": "Where is the problem?",
+    "check": "Check",
+    "checking": "Checking…",
+    "error": "error",
+    "checkedAt": "Checked {time}",
+    "intro": "Check every link of the connection — if the internet goes down, you'll see where it breaks. The check also runs automatically on disconnect.",
+    "trigger": { "offline": "automatically, on disconnect", "online": "automatically, on reconnect" },
+    "step": { "adapter": "Computer", "router": "Router", "internet": "Internet", "dns": "DNS", "web": "Web" },
+    "detail": {
+      "adapter": { "ok": "{iface} · {ip}", "dhcp": "The router didn't assign an IP address", "off": "Not connected to a network" },
+      "router": { "ok": "{ip}", "fail": "{ip} doesn't respond", "noGateway": "Router address not found", "blocked": "Doesn't answer probes, but the connection works" },
+      "internet": { "ok": "Public servers are reachable", "fail": "Public servers are unreachable" },
+      "dns": { "ok": "Names resolve", "system": "The system DNS server doesn't respond", "fail": "DNS is unreachable" },
+      "web": { "ok": "Web pages open", "captive": "Wi-Fi requires sign-in", "fail": "The HTTP request failed" },
+      "skip": "Not checked"
+    },
+    "verdict": {
+      "adapter-off": { "title": "The computer isn't connected to a network", "advice": "Check that Wi-Fi is on or the cable is plugged in." },
+      "adapter-dhcp": { "title": "The computer isn't connected to a network", "advice": "Wi-Fi/cable is connected, but the router didn't assign an address. Restart the router or turn Wi-Fi off and on." },
+      "router": { "title": "The router doesn't respond", "advice": "Restart the router (unplug it for 10 seconds). On Wi-Fi, move closer to the router." },
+      "internet": { "title": "The problem is on the provider's side", "advice": "The router works, but the internet doesn't reach it. Restart the router; if that doesn't help, contact your provider." },
+      "dns-server": { "title": "DNS isn't working", "advice": "The internet is up, but your DNS server doesn't respond. Change DNS to 1.1.1.1 or 8.8.8.8 in your network settings." },
+      "dns": { "title": "DNS isn't working", "advice": "The internet is up, but names don't resolve. Restart the router; a firewall or VPN may be blocking DNS." },
+      "captive": { "title": "Wi-Fi requires sign-in", "advice": "Open a browser — a sign-in page will appear (hotel, café, office)." },
+      "web": { "title": "Web pages don't open", "advice": "There is a connection, but HTTP is blocked. Check your VPN, proxy or firewall." },
+      "ok": { "title": "Everything is fine", "advice": "Every link of the connection works." }
+    }
+  },
+  "lan": {
+    "devices": { "one": "{count} device", "other": "{count} devices" },
+    "withNetWatch": { "one": "{count} with NetWatch", "other": "{count} with NetWatch" },
+    "scan": "Scan",
+    "scanning": "Scanning…",
+    "scanningNetwork": "Scanning the network…",
+    "empty": "No devices found",
+    "hint": "NetWatch user. A phone in sleep mode may not always appear.",
+    "thisComputer": "This computer",
+    "router": "Router",
+    "phoneTablet": "Phone / tablet",
+    "unknown": "Unknown device",
+    "group": "Group: {name}",
+    "randomMac": "Random MAC"
+  },
+  "speed": {
+    "provider": "Provider",
+    "loading": "Loading…",
+    "refresh": "Refresh",
+    "publicIp": "Public IP",
+    "asn": "ASN",
+    "location": "Location",
+    "server": "Test server",
+    "download": "Download",
+    "upload": "Upload",
+    "measure": "Measure speed",
+    "again": "Measure again",
+    "stop": "Stop · {phase}",
+    "phase": { "ping": "measuring ping", "download": "download", "upload": "upload" },
+    "verdict": {
+      "excellent": "Excellent — 4K video, gaming and large files without problems.",
+      "good": "Good — HD video, video calls and gaming will work fine.",
+      "fair": "Fair — browsing and video calls, but high quality may stutter.",
+      "poor": "Weak — video and calls may freeze."
+    },
+    "error": "The test failed — check your internet",
+    "history": "Previous tests",
+    "time": "Time",
+    "hint": "The test runs against the nearest Cloudflare server (about 20 seconds) and uses from tens to hundreds of MB of traffic, depending on your speed."
+  },
+  "history": {
+    "period": "Period",
+    "periods": { "today": "Today", "week": "7 days", "month": "30 days", "thisMonth": "This month" },
+    "when": { "today": "Today", "week": "In the last 7 days", "month": "In the last 30 days", "thisMonth": "This month" },
+    "sentenceNone": "{when} the internet didn't go down.",
+    "sentence": {
+      "one": "{when} the internet went down {count} time, {total} in total.",
+      "other": "{when} the internet went down {count} times, {total} in total."
+    },
+    "uptime": "Uptime",
+    "outages": "Outages",
+    "providerSide": { "one": "{count} on the provider's side", "other": "{count} on the provider's side" },
+    "totalOffline": "Total offline",
+    "longest": "Longest",
+    "chartTitle": "Offline time by day",
+    "monitored": "Monitored: {time} — time when the computer was off or asleep isn't counted.",
+    "pdf": "PDF report",
+    "csv": "CSV (Excel)",
+    "creating": "Creating…",
+    "list": "Outages",
+    "clear": "Clear history",
+    "clearConfirm": "Delete the whole outage history? This can't be undone.",
+    "empty": "No outages in this period",
+    "more": "Show more ({count})",
+    "ongoing": "ongoing",
+    "appClosed": "the app was closed during the outage",
+    "axisH": "{n} h",
+    "axisM": "{n} min",
+    "chart": {
+      "noData": "NetWatch wasn't running",
+      "none": "No outages",
+      "offline": { "one": "Offline {time} · {count} time", "other": "Offline {time} · {count} times" }
+    }
+  },
+  "tray": { "open": "Open", "check": "Check now", "autostart": "Start with computer", "quit": "Quit", "checkingCause": "checking the cause…" },
+  "notify": {
+    "offline": "Internet disconnected",
+    "offlineCause": "Internet disconnected — {cause}",
+    "offlineBody": "Connection lost. Waiting for it to come back…",
+    "online": "Internet is back",
+    "onlineBody": "The connection was down for {time}.",
+    "bgTitle": "NetWatch is running in the background",
+    "bgBody": "It keeps checking the internet. To open it or quit — use the icon next to the clock."
+  },
+  "window": { "online": "NetWatch — online", "offline": "NetWatch — offline" },
+  "dialog": { "savePdf": "Save report (PDF)", "saveCsv": "Save history (CSV)" },
+  "report": {
+    "title": "Internet connection report",
+    "period": "Period",
+    "provider": "Provider",
+    "ip": "Public IP",
+    "computer": "Computer",
+    "created": "Created",
+    "none": "The internet didn't go down during this period.",
+    "sentence": {
+      "one": "During this period the internet <b>went down {count} time</b>, <b>{total}</b> in total.",
+      "other": "During this period the internet <b>went down {count} times</b>, <b>{total}</b> in total."
+    },
+    "providerPart": " Of these, <b>{count}</b> on the provider's side (the router worked, the internet didn't).",
+    "stats": { "uptime": "Uptime", "outages": "Outages", "total": "Total offline time", "longest": "Longest", "average": "Average duration", "monitored": "Monitoring time" },
+    "chartTitle": "Offline time by day (minutes)",
+    "listTitle": "Outages ({count})",
+    "col": { "start": "Start", "end": "End", "duration": "Duration", "cause": "Cause / diagnosis" },
+    "ongoing": "ongoing",
+    "noneList": "No outages recorded.",
+    "note": "Uptime is counted only for the time NetWatch was running ({time}); time when the computer was off or asleep isn't counted. The internet is checked every 1–2 seconds against several public servers. Diagnostics check the router, public IPs (1.1.1.1, 8.8.8.8), DNS and HTTP.",
+    "approx": "* The app was closed during the outage — the end time is approximate."
+  },
+  "csv": {
+    "start": "Start",
+    "end": "End",
+    "durationSec": "Duration (seconds)",
+    "duration": "Duration",
+    "reason": "Reason",
+    "diagnosis": "Diagnosis",
+    "note": "Note",
+    "ongoing": "Ongoing",
+    "approx": "The app was closed during the outage — end time is approximate"
+  }
+}

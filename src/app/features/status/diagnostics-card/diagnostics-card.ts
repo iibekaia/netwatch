@@ -1,15 +1,16 @@
 import { Component, computed, inject } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { DiagnosticsService } from '../../../core/diagnostics.service';
 import { DiagStep, DiagStepId } from '../../../core/netwatch.types';
 import { Icon, IconName } from '../../../shared/icon';
+import { I18nService } from '../../../core/i18n.service';
 
-const NODES: { id: DiagStepId; label: string; icon: IconName }[] = [
-  { id: 'adapter', label: 'კომპიუტერი', icon: 'laptop' },
-  { id: 'router', label: 'როუტერი', icon: 'router' },
-  { id: 'internet', label: 'ინტერნეტი', icon: 'globe' },
-  { id: 'dns', label: 'DNS', icon: 'server' },
-  { id: 'web', label: 'ვები', icon: 'window' },
+/** რგოლები; სახელი — diag.step.<id> */
+const NODES: { id: DiagStepId; icon: IconName }[] = [
+  { id: 'adapter', icon: 'laptop' },
+  { id: 'router', icon: 'router' },
+  { id: 'internet', icon: 'globe' },
+  { id: 'dns', icon: 'server' },
+  { id: 'web', icon: 'window' },
 ];
 
 /** რგოლის ფერი სტატუსის მიხედვით */
@@ -27,11 +28,6 @@ const VERDICT_TONE = {
   bad: 'bg-bad/8 [&_strong]:text-bad',
 };
 
-const TRIGGERS: Record<string, string> = {
-  offline: 'ავტომატურად, გათიშვისას',
-  online: 'ავტომატურად, აღდგენისას',
-  manual: '', // ხელით ან ტაბის გახსნისას — მხოლოდ დრო
-};
 
 /**
  * „სად არის პრობლემა?“ — კავშირის ჯაჭვი:
@@ -40,12 +36,13 @@ const TRIGGERS: Record<string, string> = {
  */
 @Component({
   selector: 'app-diagnostics-card',
-  imports: [DatePipe, Icon],
+  imports: [Icon],
   templateUrl: './diagnostics-card.html',
   host: { class: 'card block' },
 })
 export class DiagnosticsCard {
   protected readonly diag = inject(DiagnosticsService);
+  protected readonly i18n = inject(I18nService);
 
   protected readonly nodes = computed(() => {
     const { running, result } = this.diag.state();
@@ -69,7 +66,11 @@ export class DiagnosticsCard {
     () => VERDICT_TONE[this.diag.state().result?.verdict.level ?? 'ok']
   );
 
-  protected readonly triggerLabel = computed(() => TRIGGERS[this.diag.state().trigger ?? ''] ?? '');
+  /** რამ გაუშვა: გათიშვამ/აღდგენამ (ხელით ან ტაბის გახსნისას — მხოლოდ დრო) */
+  protected readonly triggerLabel = computed(() => {
+    const trigger = this.diag.state().trigger;
+    return trigger === 'offline' || trigger === 'online' ? this.i18n.t(`diag.trigger.${trigger}`) : '';
+  });
 
   constructor() {
     // ტაბის გახსნისას ჯაჭვი ცარიელი რომ არ იყოს — ჯერ თუ არ შემოწმებულა, ახლავე (< 1 წამი)

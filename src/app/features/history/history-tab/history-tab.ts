@@ -1,8 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
-import { DatePipe } from '@angular/common';
-import { HistoryPeriod, HistoryService, PERIOD_LABELS } from '../../../core/history.service';
+import { HistoryService, PERIODS } from '../../../core/history.service';
 import { ToastService } from '../../../core/toast.service';
-import { formatDuration } from '../../../shared/format';
+import { I18nService } from '../../../core/i18n.service';
 import { Icon } from '../../../shared/icon';
 import { DowntimeChart } from '../downtime-chart/downtime-chart';
 import { OutageList } from '../outage-list/outage-list';
@@ -10,16 +9,16 @@ import { OutageList } from '../outage-list/outage-list';
 /** ტაბი „ისტორია“: uptime, გათიშვები, დღიური გრაფიკი, სია, CSV/PDF ექსპორტი */
 @Component({
   selector: 'app-history-tab',
-  imports: [DatePipe, Icon, DowntimeChart, OutageList],
+  imports: [Icon, DowntimeChart, OutageList],
   templateUrl: './history-tab.html',
   host: { class: 'flex flex-1 flex-col gap-3' },
 })
 export class HistoryTab {
   protected readonly history = inject(HistoryService);
+  protected readonly i18n = inject(I18nService);
   private readonly toast = inject(ToastService);
 
-  protected readonly periods = Object.entries(PERIOD_LABELS) as [HistoryPeriod, string][];
-  protected readonly formatDuration = formatDuration;
+  protected readonly periods = PERIODS;
 
   protected readonly summary = computed(() => this.history.report()?.summary ?? null);
 
@@ -27,11 +26,9 @@ export class HistoryTab {
   protected readonly sentence = computed(() => {
     const s = this.summary();
     if (!s) return '';
-    const when = { today: 'დღეს', week: 'ბოლო 7 დღეში', month: 'ბოლო 30 დღეში', thisMonth: 'ამ თვეში' }[
-      this.history.period()
-    ];
-    if (!s.count) return `${when} ინტერნეტი არ გათიშულა.`;
-    return `${when} ინტერნეტი ${s.count}-ჯერ გაითიშა, ჯამში ${formatDuration(s.downtimeMs)}.`;
+    const when = this.i18n.t('history.when.' + this.history.period());
+    if (!s.count) return this.i18n.t('history.sentenceNone', { when });
+    return this.i18n.t('history.sentence', { when, count: s.count, total: this.i18n.duration(s.downtimeMs) });
   });
 
   protected readonly uptime = computed(() => {
@@ -49,10 +46,10 @@ export class HistoryTab {
 
   async export(format: 'csv' | 'pdf'): Promise<void> {
     const path = await this.history.export(format);
-    if (path) this.toast.show(true, `${format.toUpperCase()} შენახულია`);
+    if (path) this.toast.show(true, this.i18n.t('toast.saved', { format: format.toUpperCase() }));
   }
 
   clear(): void {
-    if (confirm('წაიშალოს გათიშვების მთელი ისტორია? ამის დაბრუნება შეუძლებელია.')) this.history.clear();
+    if (confirm(this.i18n.t('history.clearConfirm'))) this.history.clear();
   }
 }

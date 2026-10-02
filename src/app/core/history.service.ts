@@ -1,14 +1,9 @@
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { HistoryRange, HistoryReport } from './netwatch.types';
+import { I18nService } from './i18n.service';
 
 export type HistoryPeriod = 'today' | 'week' | 'month' | 'thisMonth';
-
-export const PERIOD_LABELS: Record<HistoryPeriod, string> = {
-  today: 'დღეს',
-  week: '7 დღე',
-  month: '30 დღე',
-  thisMonth: 'ეს თვე',
-};
+export const PERIODS: HistoryPeriod[] = ['today', 'week', 'month', 'thisMonth'];
 
 /**
  * გათიშვების ისტორია და სტატისტიკა (Angular). მონაცემები დისკზე ინახება და
@@ -17,13 +12,15 @@ export const PERIOD_LABELS: Record<HistoryPeriod, string> = {
 @Injectable({ providedIn: 'root' })
 export class HistoryService {
   private readonly api = window.netwatch;
+  private readonly i18n = inject(I18nService);
   readonly available = !!this.api;
 
   readonly period = signal<HistoryPeriod>('week');
   readonly report = signal<HistoryReport | null>(null);
   readonly exporting = signal<'csv' | 'pdf' | null>(null);
 
-  readonly periodLabel = computed(() => PERIOD_LABELS[this.period()]);
+  /** PDF-ის ქვესათაურისთვის — მიმდინარე ენაზე */
+  readonly periodLabel = computed(() => this.i18n.t('history.periods.' + this.period()));
 
   constructor() {
     if (!this.api) return;

@@ -23,6 +23,7 @@
             ],
             "styles": [
               "@fontsource-variable/noto-sans-georgian/index.css",
+              "@fontsource-variable/noto-sans/index.css",
               "src/styles.css"
             ],
             "baseHref": "./"
@@ -78,6 +79,7 @@
             ],
             "styles": [
               "@fontsource-variable/noto-sans-georgian/index.css",
+              "@fontsource-variable/noto-sans/index.css",
               "src/styles.css"
             ]
           }

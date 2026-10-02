@@ -95,7 +95,7 @@ export interface Outage {
   /** ჯერ გრძელდება */
   ongoing: boolean;
   reason: string;
-  /** დიაგნოსტიკის დასკვნა, მაგ. "პრობლემა პროვაიდერის მხარესაა" */
+  /** დიაგნოსტიკის დასკვნის კოდი (diag.verdict.<code>), მაგ. "internet" */
   cause: string | null;
   failedAt: DiagStepId | null;
   /** აპი დაიხურა გათიშვის დროს — დასასრული მიახლოებითია */
@@ -135,7 +135,7 @@ export type DiagStepId = 'adapter' | 'router' | 'internet' | 'dns' | 'web';
 export interface DiagStep {
   id: DiagStepId;
   status: 'ok' | 'warn' | 'fail' | 'skip';
-  detail: string;
+  detail: Translatable;
   /** პასუხის დრო */
   ms: number | null;
 }
@@ -148,8 +148,8 @@ export interface DiagResult {
     level: 'ok' | 'warn' | 'bad';
     /** პირველი ჩავარდნილი რგოლი */
     failedAt: DiagStepId | null;
-    title: string;
-    advice: string;
+    /** diag.verdict.<code>.title / .advice */
+    code: string;
   };
 }
 
@@ -158,6 +158,19 @@ export interface DiagState {
   /** რამ გაუშვა: offline (ავტომატურად) | online | manual */
   trigger: string | null;
   result: DiagResult | null;
+}
+
+export type Lang = 'ka' | 'en' | 'uk' | 'de';
+
+export interface I18nInitial {
+  lang: Lang;
+  languages: { code: Lang; name: string }[];
+}
+
+/** თარგმნადი ტექსტი main process-იდან: { key: 'diag.detail.router.fail', params: { ip } } */
+export interface Translatable {
+  key: string;
+  params: Record<string, string | number>;
 }
 
 /** კომპიუტერთან ერთად ჩართვა; supported = false — dev რეჟიმი ან მხარდაუჭერელი ინსტალაცია */
@@ -209,6 +222,9 @@ export interface NetwatchApi {
   getDiagnostics(): Promise<DiagState>;
   runDiagnostics(): Promise<DiagState>;
   onDiagnostics(cb: (s: DiagState) => void): () => void;
+  i18n: I18nInitial;
+  setLanguage(lang: Lang): Promise<Lang>;
+  onLanguage(cb: (lang: Lang) => void): () => void;
   getAutostart(): Promise<AutostartState>;
   setAutostart(enabled: boolean): Promise<AutostartState>;
   onAutostart(cb: (s: AutostartState) => void): () => void;
