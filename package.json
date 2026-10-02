@@ -1,6 +1,6 @@
 {
   "name": "netwatch",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "scripts": {
     "ng": "ng",
     "start": "ng build && electron .",
@@ -72,7 +72,8 @@
       "dist/netwatch/browser/**/*",
       "package.json",
       "build/icon.ico",
-      "build/icon.png"
+      "build/icon.png",
+      "build/tray/**"
     ],
     "win": {
       "target": [

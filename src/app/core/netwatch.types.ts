@@ -160,6 +160,12 @@ export interface DiagState {
   result: DiagResult | null;
 }
 
+/** კომპიუტერთან ერთად ჩართვა; supported = false — dev რეჟიმი ან მხარდაუჭერელი ინსტალაცია */
+export interface AutostartState {
+  supported: boolean;
+  enabled: boolean;
+}
+
 export type UpdateStatus =
   | 'disabled'
   | 'idle'
@@ -203,6 +209,9 @@ export interface NetwatchApi {
   getDiagnostics(): Promise<DiagState>;
   runDiagnostics(): Promise<DiagState>;
   onDiagnostics(cb: (s: DiagState) => void): () => void;
+  getAutostart(): Promise<AutostartState>;
+  setAutostart(enabled: boolean): Promise<AutostartState>;
+  onAutostart(cb: (s: AutostartState) => void): () => void;
   getUpdate(): Promise<UpdateState>;
   checkUpdate(): Promise<UpdateState>;
   installUpdate(): void;

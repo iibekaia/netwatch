@@ -11,6 +11,19 @@ const { runDiagnostics } = require('./diagnostics');
 const { HistoryStore } = require('./history-store');
 const { queryHistory } = require('./history-stats');
 const historyExport = require('./history-export');
+const autostart = require('./autostart');
+const { AppTray } = require('./tray');
+const { Settings } = require('./settings');
+
+// ერთი ასლი: NetWatch-ს თუ ხელახლა გაუშვებენ (ან ავტომატურ ჩართვასთან ერთად) —
+// მეორე არ იხსნება, პირველის ფანჯარა ჩნდება
+const isPrimary = app.requestSingleInstanceLock();
+if (!isPrimary) app.quit();
+app.on('second-instance', () => showWindow());
+
+// ✕ ფანჯარას მალავს (აპი tray-ში რჩება); რეალური გასვლა — მხოლოდ tray-ის მენიუდან ან განახლებისას
+let isQuitting = false;
+app.on('before-quit', () => (isQuitting = true));
 
 // --dev: Angular იტვირთება ng serve-დან (http://localhost:4200), DevTools ავტომატურად იხსნება
 const isDev = process.argv.includes('--dev');
@@ -25,8 +38,10 @@ updater.on('state', (state) => {
   if (win && !win.isDestroyed()) win.webContents.send('update:state', state);
 });
 let win = null;
+let tray = null;
+const settings = new Settings(path.join(app.getPath('userData'), 'settings.json'));
 
-// გათიშვების ისტორია დისკზე: %APPDATA%NetWatchhistory.json
+// გათიშვების ისტორია დისკზე: %APPDATA%\NetWatch\history.json
 const history = new HistoryStore(path.join(app.getPath('userData'), 'history.json'));
 history.on('change', () => {
   if (win && !win.isDestroyed()) win.webContents.send('history:update');
@@ -94,11 +109,19 @@ function diagnose(trigger) {
       diag.running = false;
       diagRunning = null;
       sendDiag();
+      // ოფლაინ — tray-ის tooltip-ში მიზეზი ("ოფლაინ — როუტერი არ პასუხობს")
+      const status = monitor.getStatus();
+      if (status.online === false) {
+        const v = diag.result?.verdict;
+        tray?.update(false, v && v.level !== 'ok' ? v.title : null);
+      }
     });
   return diagRunning;
 }
 
 function handleChange(status) {
+  // tray: ფერი მაშინვე; მიზეზი — დიაგნოსტიკის დასრულებისას (იხ. diagnose)
+  tray?.update(status.online, status.online ? null : 'მიზეზი მოწმდება…');
   if (!win || win.isDestroyed()) return;
   win.setTitle(status.online ? 'NetWatch — ონლაინ' : 'NetWatch — ოფლაინ');
   win.webContents.send('net:change', status);
@@ -184,7 +207,10 @@ speedTest.on('progress', (p) => {
 });
 
 function notify(title, body) {
-  if (Notification.isSupported()) new Notification({ title, body }).show();
+  if (!Notification.isSupported()) return;
+  const n = new Notification({ title, body });
+  n.on('click', () => showWindow()); // შეტყობინებაზე დაკლიკება ხსნის აპს (თუნდაც tray-შია)
+  n.show();
 }
 
 // ─────────────────────────────────────────────
@@ -226,18 +252,40 @@ ipcMain.handle('update:get', () => updater.state);
 ipcMain.handle('update:check', () => updater.check());
 ipcMain.on('update:install', () => updater.install());
 ipcMain.on('devtools:toggle', () => win?.webContents.toggleDevTools());
+ipcMain.handle('autostart:get', () => ({ supported: autostart.supported(), enabled: autostart.isEnabled() }));
+ipcMain.handle('autostart:set', (_e, enabled) => setAutostart(enabled));
+
+/** ავტომატური ჩართვა — UI-დან და tray-ის მენიუდან ერთი გზით, რომ ორივე სინქრონში იყოს */
+function setAutostart(enabled) {
+  autostart.setEnabled(!!enabled);
+  tray?.refresh();
+  const state = { supported: autostart.supported(), enabled: autostart.isEnabled() };
+  if (win && !win.isDestroyed()) win.webContents.send('autostart:update', state);
+  return state;
+}
 
 // ─────────────────────────────────────────────
 //  ფანჯარა + DevTools (Inspect)
 // ─────────────────────────────────────────────
 
-function createWindow() {
+/** ფანჯრის ჩვენება: tray-დან, შეტყობინებიდან, მეორე გაშვებიდან */
+function showWindow() {
+  if (!app.isReady()) return;
+  if (!win || win.isDestroyed()) createWindow();
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
+}
+
+function createWindow({ show = true } = {}) {
   win = new BrowserWindow({
     width: 520,
     height: 720,
     minWidth: 400,
     minHeight: 560,
     title: 'NetWatch',
+    // კომპიუტრის ჩართვისას (--hidden) ფანჯარა არ ჩანს — მხოლოდ tray
+    show,
     // macOS-ზე იკონკა აპის bundle-იდან მოდის, აქ — Windows (.ico) და Linux (.png)
     icon: path.join(__dirname, '..', 'build', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     // მენიუს ზოლი (View / Network) დამალულია — Alt აჩენს, shortcut-ები (Ctrl+K და ა.შ.) მუშაობს
@@ -280,6 +328,19 @@ function createWindow() {
     win.loadFile(PROD_INDEX);
   }
 
+  // ✕ — ფანჯარა იმალება, მონიტორინგი გრძელდება (tray). გასვლა — tray-ის მენიუდან
+  win.on('close', (event) => {
+    if (isQuitting) return;
+    event.preventDefault();
+    win.hide();
+    if (!settings.get('trayHintShown', false)) {
+      settings.set('trayHintShown', true);
+      notify(
+        'NetWatch ფონზე მუშაობს',
+        'ინტერნეტს კვლავ ამოწმებს. გასახსნელად ან გასასვლელად — იკონკა საათის გვერდით.'
+      );
+    }
+  });
   win.on('closed', () => (win = null));
 }
 
@@ -313,9 +374,25 @@ function buildMenu() {
 if (process.platform === 'win32') app.setAppUserModelId('com.iibekaia.netwatch');
 
 app.whenReady().then(() => {
+  if (!isPrimary) return; // მეორე ასლი — უკვე იხურება
+
+  // პირველი გაშვება (დაყენებული აპი): კომპიუტერთან ერთად ჩართვა ნაგულისხმევად ჩართულია —
+  // მონიტორი მაშინ მუშაობს, როცა ფანჯარა დახურულია; გამორთვა — tray-ის მენიუდან ან footer-იდან
+  if (!settings.get('firstRunDone', false) && autostart.supported()) {
+    autostart.setEnabled(true);
+    settings.set('firstRunDone', true);
+  }
+
   history.start(); // მონიტორამდე — რომ საწყისი "ოფლაინ"-იც ჩაიწეროს
   buildMenu();
-  createWindow();
+  createWindow({ show: !autostart.launchedHidden() });
+  tray = new AppTray({
+    autostart,
+    onOpen: () => showWindow(),
+    onCheck: () => monitor.checkNow('tray'),
+    onToggleAutostart: (enabled) => setAutostart(enabled),
+    onQuit: () => app.quit(),
+  });
   monitor.start();
   peers.start();
   scanLan();
@@ -330,29 +407,29 @@ app.whenReady().then(() => {
   });
   powerMonitor.on('unlock-screen', () => monitor.checkNow('unlock'));
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
+  // macOS: Dock-ის იკონკაზე დაკლიკება
+  app.on('activate', () => showWindow());
 });
 
+// ფანჯრები მხოლოდ გასვლისას იხურება (✕ მალავს) — მაშინ აპიც სრულდება
 app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
+
+// ნებისმიერი გასვლა: tray-ის მენიუ, განახლების დაყენება (quitAndInstall), macOS-ზე Cmd+Q
+app.on('will-quit', shutdown);
+
+let shutDown = false;
+function shutdown() {
+  if (shutDown || !isPrimary) return;
+  shutDown = true;
   monitor.stop();
   peers.stop();
   speedTest.cancel();
   updater.stop();
-  stopHistory();
-  clearTimeout(lanTimer);
-  if (process.platform !== 'darwin') app.quit();
-});
-
-// განახლების დაყენებისას (quitAndInstall) და macOS-ზე Cmd+Q-ით გასვლისას
-app.on('will-quit', stopHistory);
-
-let historyStopped = false;
-function stopHistory() {
-  if (historyStopped) return;
-  historyStopped = true;
   history.stop();
+  clearTimeout(lanTimer);
+  tray?.destroy();
 }
 
 // ─────────────────────────────────────────────

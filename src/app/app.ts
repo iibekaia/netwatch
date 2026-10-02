@@ -4,6 +4,7 @@ import { ConnectionService } from './core/connection.service';
 import { LanService } from './core/lan.service';
 import { ToastService } from './core/toast.service';
 import { UpdateService } from './core/update.service';
+import { AutostartService } from './core/autostart.service';
 import { formatDuration, reasonText } from './shared/format';
 import { AppTab, TabNav } from './layout/tab-nav/tab-nav';
 import { Toasts } from './layout/toasts/toasts';
@@ -24,6 +25,7 @@ export class App {
   protected readonly conn = inject(ConnectionService);
   protected readonly lan = inject(LanService);
   protected readonly update = inject(UpdateService);
+  protected readonly autostart = inject(AutostartService);
   protected readonly tab = signal<AppTab>('status');
   protected readonly versions = window.netwatch?.versions;
 
