@@ -1,11 +1,12 @@
 /**
- * MAC → მწარმოებლის კომპაქტური ბაზა: electron/data/oui.json
+ * MAC → მწარმოებლის SQLite ბაზა: electron/data/oui.db (აპს ინსტალერით მიჰყვება, ოფლაინ მუშაობს)
  *
  * წყარო: npm პაკეტი `oui-data` (IEEE-ის რეესტრი, ~5.7 MB). აპში მთლიანად არ ჩადის —
- * აქედან ვაწყობთ მოკლე ვერსიას: { v: [მწარმოებლები], m: { "D4FF1A": 12, ... } }.
+ * აქედან ვაწყობთ კომპაქტურ ბაზას მოკლე სახელებით.
  *
  * განახლება (წელიწადში ერთხელ-ორჯერ საკმარისია):
- *   npm update oui-data && node scripts/build-oui.js
+ *   npm update oui-data && npm run oui
+ * Electron-ით ეშვება (არა ჩვეულებრივი node-ით): SQLite (node:sqlite) Node 22-შია, Electron-ში ჩაშენებული.
  */
 const fs = require('fs');
 const path = require('path');
@@ -118,9 +119,37 @@ for (const [prefix, raw] of Object.entries(db)) {
   map[prefix] = index.get(name);
 }
 
-const out = path.join(__dirname, '..', 'electron', 'data', 'oui.json');
+// ───────── SQLite ფაილში ჩაწერა ─────────
+//   vendors  (id, name)                 — მწარმოებლები (თითო ერთხელ)
+//   prefixes (prefix PRIMARY KEY, vendor_id) — MAC-ის დასაწყისი → მწარმოებელი
+//   meta     (key, value)               — წყარო და ვერსია
+const { DatabaseSync } = require('node:sqlite');
+
+const out = path.join(__dirname, '..', 'electron', 'data', 'oui.db');
 fs.mkdirSync(path.dirname(out), { recursive: true });
+fs.rmSync(out, { force: true });
 // პაკეტი package.json-ს არ ექსპორტავს — ვერსიას ფაილიდან ვკითხულობთ
 const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'node_modules', 'oui-data', 'package.json'), 'utf8'));
-fs.writeFileSync(out, JSON.stringify({ source: `oui-data ${pkg.version}`, v: vendors, m: map }));
+
+const sql = new DatabaseSync(out);
+sql.exec(`
+  PRAGMA page_size = 4096;
+  CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+  CREATE TABLE vendors (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
+  CREATE TABLE prefixes (prefix TEXT PRIMARY KEY, vendor_id INTEGER NOT NULL REFERENCES vendors(id)) WITHOUT ROWID;
+`);
+sql.exec('BEGIN');
+const insVendor = sql.prepare('INSERT INTO vendors (id, name) VALUES (?, ?)');
+vendors.forEach((name, id) => insVendor.run(id, name));
+const insPrefix = sql.prepare('INSERT INTO prefixes (prefix, vendor_id) VALUES (?, ?)');
+for (const [prefix, id] of Object.entries(map)) insPrefix.run(prefix, id);
+const insMeta = sql.prepare('INSERT INTO meta (key, value) VALUES (?, ?)');
+insMeta.run('source', `oui-data ${pkg.version}`);
+insMeta.run('built', new Date().toISOString());
+sql.exec('COMMIT');
+sql.exec('VACUUM'); // ფაილი მინიმალური ზომის
+sql.close();
+
 console.log(`${Object.keys(map).length} prefixes, ${vendors.length} vendors → ${path.relative(process.cwd(), out)} (${Math.round(fs.statSync(out).size / 1024)} KB)`);
+// Electron-ით გაშვებისას (npm run oui) პროცესი თავისით არ სრულდება
+process.exit(0);

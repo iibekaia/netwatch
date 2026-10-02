@@ -26,7 +26,7 @@ class ConnectionMonitor extends EventEmitter {
     this.targets = options.targets ?? [
       'https://www.gstatic.com/generate_204',
       'https://cp.cloudflare.com/generate_204',
-      'https://www.msftconnecttest.com/connecttest.txt',
+      'https://detectportal.firefox.com/success.txt',
     ];
     this.timeoutMs = options.timeoutMs ?? 2500;
     this.onlineIntervalMs = options.onlineIntervalMs ?? 2000;

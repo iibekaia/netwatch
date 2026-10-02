@@ -18,6 +18,8 @@ contextBridge.exposeInMainWorld('netwatch', {
   getProvider: (refresh) => ipcRenderer.invoke('isp:get', refresh),
   onProvider: (callback) => subscribe('isp:update', callback),
   runSpeedTest: () => ipcRenderer.invoke('speed:run'),
+  getSpeedHistory: (limit) => ipcRenderer.invoke('speed:history', limit),
+  importSpeedHistory: (list) => ipcRenderer.invoke('speed:import', list),
   cancelSpeedTest: () => ipcRenderer.send('speed:cancel'),
   onSpeedProgress: (callback) => subscribe('speed:progress', callback),
   queryHistory: (range) => ipcRenderer.invoke('history:query', range),

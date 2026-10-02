@@ -1,11 +1,14 @@
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { ProviderInfo, SpeedPhase, SpeedResult } from './netwatch.types';
 
-const HISTORY_KEY = 'netwatch.speedHistory';
+/** ძველი ვერსიები გაზომვებს აქ ინახავდნენ — ერთხელ გადადის ბაზაში და იშლება */
+const LEGACY_KEY = 'netwatch.speedHistory';
+const HISTORY_LIMIT = 10;
 
 /**
  * სიჩქარის ტესტი და პროვაიდერის ინფო (Angular).
- * თვითონ გაზომვა main process-ში ხდება (electron/speed-test.js), აქ — მხოლოდ მდგომარეობა.
+ * თვითონ გაზომვა main process-ში ხდება (electron/speed-test.js), შედეგები — ბაზაში
+ * (netwatch.db → speed_tests); აქ — მხოლოდ მდგომარეობა.
  */
 @Injectable({ providedIn: 'root' })
 export class SpeedService {
@@ -22,8 +25,8 @@ export class SpeedService {
   readonly live = signal<Partial<SpeedResult>>({});
   /** შეცდომის თარგმანის გასაღები (speed.error) */
   readonly error = signal<string | null>(null);
-  /** ბოლო 10 შედეგი (ახალი — თავში) */
-  readonly history = signal<SpeedResult[]>(loadHistory());
+  /** ბოლო გაზომვები (ახალი — თავში), ბაზიდან */
+  readonly history = signal<SpeedResult[]>([]);
 
   constructor() {
     if (!this.api) return;
@@ -38,6 +41,22 @@ export class SpeedService {
       })
     );
     this.refreshProvider(false);
+    this.loadHistory();
+  }
+
+  /** ბაზიდან; პირველ გაშვებაზე — ჯერ localStorage-ის ძველი ჩანაწერების გადატანა */
+  private async loadHistory(): Promise<void> {
+    if (!this.api) return;
+    const legacy = readLegacy();
+    if (legacy) {
+      await this.api.importSpeedHistory(legacy);
+      try {
+        localStorage.removeItem(LEGACY_KEY);
+      } catch {
+        // არ არის კრიტიკული — importLegacy მეორედ აღარ ჩაწერს (ცხრილი უკვე სავსეა)
+      }
+    }
+    this.history.set(await this.api.getSpeedHistory(HISTORY_LIMIT));
   }
 
   async refreshProvider(force = true): Promise<void> {
@@ -61,8 +80,8 @@ export class SpeedService {
       const res = await this.api.runSpeedTest();
       if (res.ok) {
         this.live.set(res.result);
-        this.history.update((h) => [res.result, ...h].slice(0, 10));
-        saveHistory(this.history());
+        // main process-მა უკვე ჩაწერა ბაზაში — აქ მხოლოდ სიის განახლება
+        this.history.update((h) => [res.result, ...h].slice(0, HISTORY_LIMIT));
       } else if (!/abort|cancel/i.test(res.error)) {
         this.error.set('speed.error'); // თარგმანის გასაღები
       }
@@ -77,19 +96,11 @@ export class SpeedService {
   }
 }
 
-function loadHistory(): SpeedResult[] {
+function readLegacy(): SpeedResult[] | null {
   try {
-    const list = JSON.parse(localStorage.getItem(HISTORY_KEY) ?? '[]');
-    return Array.isArray(list) ? list.slice(0, 10) : [];
+    const list = JSON.parse(localStorage.getItem(LEGACY_KEY) ?? 'null');
+    return Array.isArray(list) && list.length ? list : null;
   } catch {
-    return [];
-  }
-}
-
-function saveHistory(list: SpeedResult[]): void {
-  try {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
-  } catch {
-    // შენახვა არ არის კრიტიკული
+    return null;
   }
 }

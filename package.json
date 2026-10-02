@@ -1,6 +1,6 @@
 {
   "name": "netwatch",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "scripts": {
     "ng": "ng",
     "start": "ng build && electron .",
@@ -12,7 +12,7 @@
     "dist:win": "ng build && electron-builder --win --publish never",
     "dist:mac": "ng build && electron-builder --mac --publish never",
     "dist:linux": "ng build && electron-builder --linux --publish never",
-    "oui": "node scripts/build-oui.js"
+    "oui": "electron scripts/build-oui.js"
   },
   "prettier": {
     "printWidth": 100,
@@ -149,6 +149,9 @@
       "category": "Network",
       "synopsis": "ინტერნეტ-კავშირის ლაივ მონიტორი",
       "artifactName": "NetWatch-linux.${ext}"
-    }
+    },
+    "asarUnpack": [
+      "electron/data/**"
+    ]
   }
 }

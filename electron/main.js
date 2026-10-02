@@ -14,6 +14,8 @@ const historyExport = require('./history-export');
 const autostart = require('./autostart');
 const { AppTray } = require('./tray');
 const { Settings } = require('./settings');
+const { openDatabase } = require('./db');
+const { SpeedStore } = require('./speed-store');
 const { i18n, SUPPORTED, LOCALES } = require('./i18n');
 
 // ერთი ასლი: NetWatch-ს თუ ხელახლა გაუშვებენ (ან ავტომატურ ჩართვასთან ერთად) —
@@ -40,7 +42,11 @@ updater.on('state', (state) => {
 });
 let win = null;
 let tray = null;
-const settings = new Settings(path.join(app.getPath('userData'), 'settings.json'));
+// მომხმარებლის მონაცემები — SQLite: %APPDATA%\NetWatch\netwatch.db
+// (პარამეტრები, გათიშვების ისტორია, სიჩქარის გაზომვები; ძველი .json ფაილები ერთხელ გადმოდის)
+const db = openDatabase(app.getPath('userData'));
+const settings = new Settings(db);
+const speedStore = new SpeedStore(db);
 
 // ენა: შენახული არჩევანი, ან — რეგიონის/სისტემის მიხედვით (electron/i18n.js)
 // ready-მდე app.getPreferredSystemLanguages() შეიძლება ცარიელი იყოს — init ხელახლა whenReady-ში
@@ -50,8 +56,8 @@ i18n.on('change', (lang) => {
   if (win && !win.isDestroyed()) win.webContents.send('i18n:changed', lang);
 });
 
-// გათიშვების ისტორია დისკზე: %APPDATA%\NetWatch\history.json
-const history = new HistoryStore(path.join(app.getPath('userData'), 'history.json'));
+// გათიშვების ისტორია — იგივე ბაზაში (outages, sessions)
+const history = new HistoryStore(db);
 history.on('change', () => {
   if (win && !win.isDestroyed()) win.webContents.send('history:update');
 });
@@ -248,14 +254,19 @@ ipcMain.handle('isp:get', async (_e, refresh = false) => {
 ipcMain.handle('speed:run', async () => {
   loadProvider(); // IP/პროვაიდერი შეიძლება შეიცვალა
   try {
-    return { ok: true, result: await speedTest.run() };
+    const result = await speedTest.run();
+    speedStore.add(result);
+    return { ok: true, result };
   } catch (err) {
     return { ok: false, error: speedTest.running ? 'busy' : String(err?.message ?? err) };
   }
 });
 ipcMain.on('speed:cancel', () => speedTest.cancel());
 ipcMain.handle('diag:get', () => diag);
-ipcMain.handle('history:query', (_e, range) => queryHistory(history.snapshot(), range));
+ipcMain.handle('history:query', (_e, range) => queryHistory(history.snapshot(range), range));
+ipcMain.handle('speed:history', (_e, limit) => speedStore.list(limit));
+// ძველი ვერსიების localStorage-ის გაზომვები → ბაზა (ერთხელ)
+ipcMain.handle('speed:import', (_e, list) => speedStore.importLegacy(list));
 ipcMain.handle('history:clear', () => history.clear());
 ipcMain.handle('history:export', (_e, opts) => exportHistory(opts));
 ipcMain.handle('diag:run', async () => {
@@ -473,7 +484,7 @@ function shutdown() {
 // ─────────────────────────────────────────────
 
 async function exportHistory({ format, from, to, periodLabel }) {
-  const report = queryHistory(history.snapshot(), { from, to });
+  const report = queryHistory(history.snapshot({ from, to }), { from, to });
   const stamp = historyExport.dateTime(Date.now()).slice(0, 10);
   const { canceled, filePath } = await dialog.showSaveDialog(win, {
     title: i18n.t(format === 'pdf' ? 'dialog.savePdf' : 'dialog.saveCsv'),

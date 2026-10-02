@@ -215,6 +215,8 @@ export interface NetwatchApi {
   getProvider(refresh?: boolean): Promise<ProviderInfo | null>;
   onProvider(cb: (p: ProviderInfo | null) => void): () => void;
   runSpeedTest(): Promise<SpeedRunResponse>;
+  getSpeedHistory(limit?: number): Promise<SpeedResult[]>;
+  importSpeedHistory(list: SpeedResult[]): Promise<number>;
   cancelSpeedTest(): void;
   onSpeedProgress(cb: (p: SpeedProgress) => void): () => void;
   queryHistory(range: HistoryRange): Promise<HistoryReport>;
