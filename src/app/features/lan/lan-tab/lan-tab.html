@@ -1,36 +1,40 @@
-<div class="flex items-center justify-between gap-3">
-  <div>
-    <p class="text-[15px]">
-      <strong>{{ lan.devices().length }}</strong> მოწყობილობა ქსელში
+<div class="flex items-end justify-between gap-3 px-1">
+  <div class="min-w-0">
+    <p class="text-[15px] font-medium">
+      {{ lan.devices().length }} მოწყობილობა
       @if (lan.peerCount()) {
-        · <strong class="text-ok">{{ lan.peerCount() }}</strong> NetWatch-ით
+        <span class="text-muted"> · </span>
+        <span class="text-ok">{{ lan.peerCount() }} NetWatch-ით</span>
       }
     </p>
-    <p class="mt-0.5 flex flex-wrap gap-x-2.5 gap-y-1 text-xs text-muted">
+    <p class="mt-0.5 flex flex-wrap gap-x-2 text-xs text-muted">
       @for (s of lan.state()?.subnets ?? []; track s.address) {
         <span>{{ s.network }}/{{ prefix(s.netmask) }} · {{ s.iface }}</span>
       }
       @if (lan.state()?.scannedAt; as at) {
-        <span>განახლდა {{ at | date: 'HH:mm:ss' }}</span>
+        <span>· {{ at | date: 'HH:mm:ss' }}</span>
       }
     </p>
   </div>
-  <button class="btn-ghost" (click)="lan.scan()" [disabled]="lan.scanning()">
+  <button class="btn-soft" (click)="lan.scan()" [disabled]="lan.scanning()">
+    <app-icon name="refresh" class="size-3.5" [class.animate-spin]="lan.scanning()" />
     {{ lan.scanning() ? 'სკანირება…' : 'სკანირება' }}
   </button>
 </div>
 
-<ul class="flex flex-col gap-1.5">
-  @for (d of lan.devices(); track d.ip) {
-    <li><app-device-card [device]="d" /></li>
-  } @empty {
-    <li class="empty-state">
-      {{ lan.scanning() ? 'ქსელი სკანირდება…' : 'მოწყობილობები ვერ მოიძებნა' }}
-    </li>
-  }
-</ul>
+@if (lan.devices().length) {
+  <ul class="card divide-y divide-border overflow-hidden p-0">
+    @for (d of lan.devices(); track d.ip) {
+      <li><app-device-card [device]="d" /></li>
+    }
+  </ul>
+} @else {
+  <p class="empty-state">
+    {{ lan.scanning() ? 'ქსელი სკანირდება…' : 'მოწყობილობები ვერ მოიძებნა' }}
+  </p>
+}
 
-<p class="text-center text-[11px] text-muted">
-  მწვანედ მონიშნულია ის, ვისაც NetWatch აქვს გაშვებული. ზოგი მოწყობილობა (მაგ. ძილის
-  რეჟიმში მყოფი ტელეფონი) შეიძლება ყოველ სკანირებაზე არ ჩანდეს.
+<p class="flex items-center justify-center gap-1.5 text-[11px] text-muted">
+  <span class="size-1.5 rounded-full bg-ok"></span>
+  NetWatch-ის მომხმარებელი. ძილის რეჟიმში მყოფი ტელეფონი შეიძლება ყოველთვის არ ჩანდეს.
 </p>

@@ -1,14 +1,19 @@
-<main class="mx-auto flex min-h-screen max-w-[560px] flex-col gap-4 px-5 pt-5 pb-3">
+<main class="mx-auto flex min-h-screen max-w-[560px] flex-col gap-5 px-5 pt-6 pb-4">
   <header class="flex items-center justify-between">
     <div class="flex items-center gap-2.5">
-      <span
-        class="size-[22px] rounded-md bg-[conic-gradient(from_200deg,var(--ok),var(--accent),var(--ok))]"
-        aria-hidden="true"
-      ></span>
-      <h1 class="text-lg font-bold tracking-wide">NetWatch</h1>
+      <span class="grid size-8 place-items-center rounded-[10px] bg-text text-bg" aria-hidden="true">
+        <app-icon name="globe" class="size-[18px]" />
+      </span>
+      <h1 class="text-[17px] font-semibold tracking-tight">NetWatch</h1>
     </div>
+
+    <!-- მიმდინარე მდგომარეობა — ყველა ტაბიდან ჩანს -->
+    <span class="inline-flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 text-xs text-muted shadow-soft ring-1 ring-border">
+      <span class="size-1.5 rounded-full" [class]="statusDot()"></span>
+      {{ statusText() }}
+    </span>
     <!--    @if (conn.isElectron) {-->
-    <!--      <button class="btn-ghost" (click)="conn.toggleDevTools()" title="F12 / Ctrl+Shift+I">-->
+    <!--      <button class="btn-soft" (click)="conn.toggleDevTools()" title="F12 / Ctrl+Shift+I">-->
     <!--        Inspect-->
     <!--      </button>-->
     <!--    }-->
@@ -16,22 +21,22 @@
 
   <!-- ქსელი და სიჩქარე მხოლოდ Electron-შია (ბრაუზერში — მხოლოდ კავშირი) -->
   @if (lan.available) {
-    <app-tab-nav [(active)]="tab"/>
+    <app-tab-nav [(active)]="tab" />
   }
 
   @switch (tab()) {
     @case ('lan') {
-      <app-lan-tab/>
+      <app-lan-tab />
     }
     @case ('speed') {
-      <app-speed-tab/>
+      <app-speed-tab />
     }
     @default {
-      <app-status-tab/>
+      <app-status-tab />
     }
   }
 
-  <footer class="text-center text-[11px] text-muted">
+  <footer class="mt-auto text-center text-[11px] text-muted/70">
     @if (versions) {
       Electron {{ versions.electron }} · Chrome {{ versions.chrome }} · Node {{ versions.node }}
     } @else {
@@ -40,4 +45,4 @@
   </footer>
 </main>
 
-<app-toasts/>
+<app-toasts />

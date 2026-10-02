@@ -1,68 +1,67 @@
 @import 'tailwindcss';
 
 /* ─────────────────────────────────────────────
-   თემა — ფერები light/dark რეჟიმისთვის.
-   Tailwind-ში ხელმისაწვდომია როგორც bg-card, text-muted, border-border, text-ok, bg-bad/15 …
+   თემა — მინიმალისტური, ნეიტრალური (zinc) ბაზა.
+   ფერი მხოლოდ იქ, სადაც რამეს ნიშნავს:
+     ok     — ონლაინ / NetWatch-ის მომხმარებელი (მწვანე)
+     bad    — ოფლაინ / შეცდომა (წითელი)
+     accent — აქტიური ელემენტი, პროგრესი (ლურჯი)
+   მთავარი ღილაკი — "მელანი" (ტექსტის ფერი): light-ში შავი, dark-ში თეთრი.
+   Tailwind-ში: bg-card, text-muted, border-border, text-ok, bg-bad/10 …
    ───────────────────────────────────────────── */
 
 :root {
-  --bg: #f5f6f8;
+  --bg: #f7f7f8;
   --card: #ffffff;
-  --text: #16181d;
-  --muted: #6b7280;
-  --border: #e4e6eb;
-  --accent: #4f46e5;
-  --on-accent: #ffffff;
-  --ok: #16a34a;
-  --ok-strong: #15803d;
-  --bad: #dc2626;
-  --bad-strong: #b91c1c;
-  --bad-bg: #fef2f2;
+  --subtle: #f1f1f3; /* ჩაღრმავებული ზედაპირი: ტაბების ფონი, ბარის "რელსი" */
+  --raised: #ffffff; /* ამოწეული ზედაპირი subtle-ზე: არჩეული ტაბი */
+  --text: #18181b;
+  --muted: #71717a;
+  --border: #e9e9ec;
+  --accent: #2563eb;
+  --ok: #10b981;
+  --bad: #ef4444;
   color-scheme: light dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #111317;
-    --card: #1a1d23;
-    --text: #e7e9ee;
-    --muted: #9aa1ad;
-    --border: #2a2e37;
-    --accent: #818cf8;
-    --on-accent: #111317;
-    --ok: #4ade80;
-    --ok-strong: #15803d;
+    --bg: #0b0b0d;
+    --card: #151518;
+    --subtle: #1d1d21;
+    --raised: #2c2c32;
+    --text: #f4f4f5;
+    --muted: #9b9ba3;
+    --border: #26262b;
+    --accent: #60a5fa;
+    --ok: #34d399;
     --bad: #f87171;
-    --bad-strong: #b91c1c;
-    --bad-bg: #24161a;
   }
 }
 
 @theme inline {
   --color-bg: var(--bg);
   --color-card: var(--card);
+  --color-subtle: var(--subtle);
+  --color-raised: var(--raised);
   --color-text: var(--text);
   --color-muted: var(--muted);
   --color-border: var(--border);
   --color-accent: var(--accent);
-  --color-on-accent: var(--on-accent);
   --color-ok: var(--ok);
-  --color-ok-strong: var(--ok-strong);
   --color-bad: var(--bad);
-  --color-bad-strong: var(--bad-strong);
-  --color-bad-bg: var(--bad-bg);
 
   /* Noto Sans Georgian (ცვლადი, წონა 100–900) აპშია ჩაშენებული — angular.json → styles,
      ამიტომ ინტერნეტის გარეშეც იტვირთება */
   --font-sans: 'Noto Sans Georgian Variable', 'Noto Sans Georgian', system-ui, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
 
-  --animate-slide-in: slide-in 0.25s ease-out;
-  --animate-toast-in: toast-in 0.25s ease-out;
-  --animate-ripple: ripple 2.4s ease-out infinite;
-  --animate-blink: blink 1s ease-in-out infinite;
-  --animate-blink-text: blink-text 1s ease-in-out infinite;
-  --animate-shimmer: shimmer 1.2s linear infinite;
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.04), 0 1px 3px rgb(0 0 0 / 0.04);
+
+  --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-toast-in: toast-in 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  --animate-ping-soft: ping-soft 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-shimmer: shimmer 1.4s linear infinite;
 }
 
 @layer base {
@@ -74,7 +73,27 @@
     @apply cursor-pointer;
   }
   button:disabled {
-    @apply cursor-default opacity-60;
+    @apply cursor-default opacity-50;
+  }
+  ::selection {
+    @apply bg-accent/20;
+  }
+  /* თხელი, მომრგვალებული scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-border;
+    border: 3px solid var(--bg);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted/50;
+  }
+  ::-webkit-scrollbar-button {
+    display: none;
   }
 }
 
@@ -82,93 +101,81 @@
    საერთო კლასები — რამდენიმე კომპონენტი იყენებს
    ───────────────────────────────────────────── */
 
+/* მთავარი ღილაკი — "მელნის" ფერი */
 @utility btn-primary {
-  @apply w-full rounded-[10px] bg-accent p-3 font-semibold text-on-accent transition;
+  @apply h-11 w-full rounded-xl bg-text text-[15px] font-medium text-bg transition active:scale-[0.99];
   &:hover:not(:disabled) {
-    @apply brightness-110;
+    @apply opacity-90;
   }
 }
 @utility btn-danger {
-  @apply w-full rounded-[10px] bg-bad p-3 font-semibold text-white transition;
-}
-@utility btn-ghost {
-  @apply shrink-0 rounded-[10px] border border-border px-3 py-1.5 text-[13px] text-muted transition;
+  @apply h-11 w-full rounded-xl bg-bad/10 text-[15px] font-medium text-bad transition active:scale-[0.99];
   &:hover:not(:disabled) {
-    @apply border-muted text-text;
+    @apply bg-bad/15;
+  }
+}
+/* მეორეხარისხოვანი ღილაკი (იკონკით ან მოკლე ტექსტით) */
+@utility btn-soft {
+  @apply inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-subtle px-3 text-[13px] font-medium text-text transition;
+  &:hover:not(:disabled) {
+    @apply bg-border;
   }
 }
 @utility btn-link {
-  @apply px-1 py-0.5 text-xs text-muted hover:text-text;
+  @apply text-[13px] text-muted transition hover:text-text;
 }
 
 @utility card {
-  @apply rounded-[14px] border border-border bg-card px-4 py-3.5;
+  @apply rounded-2xl border border-border bg-card p-4 shadow-soft;
 }
-/* პატარა სათაური (UPPERCASE) */
+/* პატარა ნაცრისფერი წარწერა მნიშვნელობის თავზე */
 @utility caption {
-  @apply text-[11px] tracking-wider text-muted uppercase;
+  @apply text-xs text-muted;
 }
 @utility section-title {
-  @apply text-[13px] font-semibold tracking-wider text-muted uppercase;
+  @apply text-sm font-medium text-text;
 }
 /* დიდი რიცხვი (Mbps / ms) */
 @utility stat {
-  @apply text-[26px] leading-tight font-bold tabular-nums;
+  @apply text-[28px] leading-none font-semibold tracking-tight tabular-nums;
   & small {
-    @apply ml-1 text-xs font-medium text-muted;
+    @apply ml-1 text-xs font-normal tracking-normal text-muted;
   }
 }
-/* მრიცხველი ტაბზე (ფერს კომპონენტი ამატებს) */
+/* მრიცხველი ტაბზე */
 @utility badge {
-  @apply rounded-full px-[7px] py-px text-[11px] tabular-nums;
+  @apply rounded-md px-1.5 py-px text-[11px] font-medium tabular-nums;
 }
-/* პატარა ნიშანი ბარათზე (ფერს კომპონენტი ამატებს: bg-ok text-card …) */
+/* ნიშანი ბარათზე */
 @utility tag {
-  @apply rounded-full px-[7px] py-px text-[10px] font-semibold tracking-wide uppercase;
+  @apply rounded-md px-1.5 py-px text-[11px] font-medium;
 }
 /* ცარიელი სიის შეტყობინება */
 @utility empty-state {
-  @apply rounded-[10px] border border-dashed border-border bg-card p-[18px] text-center text-[13px] text-muted;
+  @apply rounded-2xl border border-dashed border-border px-4 py-8 text-center text-[13px] text-muted;
 }
 
 /* ─────────────────────────────────────────────
    ანიმაციები (animate-* კლასები)
    ───────────────────────────────────────────── */
 
-@keyframes slide-in {
+@keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(-4px);
+    transform: translateY(2px);
   }
 }
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(12px) scale(0.98);
   }
 }
-@keyframes ripple {
-  from {
-    transform: scale(0.4);
-    opacity: 0.45;
-  }
-  to {
-    transform: scale(1.1);
-    opacity: 0;
-  }
-}
-@keyframes blink {
-  0%,
+@keyframes ping-soft {
+  75%,
   100% {
+    transform: scale(2.2);
     opacity: 0;
-  }
-  50% {
-    opacity: 0.25;
-  }
-}
-@keyframes blink-text {
-  50% {
-    opacity: 0.4;
   }
 }
 @keyframes shimmer {

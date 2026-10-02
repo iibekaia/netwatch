@@ -1,5 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { formatNumber } from '../../../shared/format';
+import { Icon, IconName } from '../../../shared/icon';
 
 /**
  * სიჩქარის ბარი ლოგარითმული სკალით 0–1000 Mbps
@@ -7,15 +8,16 @@ import { formatNumber } from '../../../shared/format';
  */
 @Component({
   selector: 'app-speed-meter',
+  imports: [Icon],
   templateUrl: './speed-meter.html',
   host: { class: 'block' },
 })
 export class SpeedMeter {
   readonly label = input.required<string>();
-  readonly icon = input('');
+  readonly icon = input.required<IconName>();
   /** Mbps; undefined — ჯერ არ გაზომილა */
   readonly value = input<number | undefined>(undefined);
-  /** ახლა იზომება — ბარი "ციმციმებს" */
+  /** ახლა იზომება — ბარზე "ნათება" მოძრაობს */
   readonly active = input(false);
   readonly color = input<'accent' | 'ok'>('accent');
 
@@ -27,8 +29,8 @@ export class SpeedMeter {
     return Math.min(100, (Math.log10(1 + v) / Math.log10(1001)) * 100);
   });
 
-  protected readonly fill = computed(() =>
-    this.color() === 'ok' ? 'from-ok/55 to-ok' : 'from-accent/55 to-accent'
+  protected readonly tone = computed(() =>
+    this.color() === 'ok' ? { bar: 'bg-ok', text: 'text-ok bg-ok/10' } : { bar: 'bg-accent', text: 'text-accent bg-accent/10' }
   );
 
   /** სკალის ნიშნულები და მათი პოზიცია (%) */

@@ -1,4 +1,5 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Icon } from './shared/icon';
 import { ConnectionService } from './core/connection.service';
 import { LanService } from './core/lan.service';
 import { ToastService } from './core/toast.service';
@@ -12,7 +13,7 @@ import { SpeedTab } from './features/speed/speed-tab/speed-tab';
 /** აპის ჩარჩო: header, ტაბები, აქტიური ტაბის შიგთავსი, footer, toast-ები */
 @Component({
   selector: 'app-root',
-  imports: [TabNav, Toasts, StatusTab, LanTab, SpeedTab],
+  imports: [Icon, TabNav, Toasts, StatusTab, LanTab, SpeedTab],
   templateUrl: './app.html',
   host: { class: 'block min-h-screen' },
 })
@@ -21,6 +22,16 @@ export class App {
   protected readonly lan = inject(LanService);
   protected readonly tab = signal<AppTab>('status');
   protected readonly versions = window.netwatch?.versions;
+
+  /** header-ის პატარა ინდიკატორი */
+  protected readonly statusText = computed(() => {
+    const online = this.conn.online();
+    return online === null ? 'მოწმდება' : online ? 'ონლაინ' : 'ოფლაინ';
+  });
+  protected readonly statusDot = computed(() => {
+    const online = this.conn.online();
+    return online === null ? 'bg-muted' : online ? 'bg-ok' : 'bg-bad';
+  });
 
   private readonly toast = inject(ToastService);
 

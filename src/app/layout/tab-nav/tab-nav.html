@@ -1,23 +1,30 @@
 @for (t of tabs; track t.id) {
+  @let selected = active() === t.id;
   <button
     role="tab"
-    class="flex items-center justify-center gap-1.5 rounded-[10px] p-2 text-sm font-semibold transition"
-    [class]="active() === t.id ? 'bg-accent/14 text-accent' : 'text-muted hover:text-text'"
-    [attr.aria-selected]="active() === t.id"
+    class="flex h-9 items-center justify-center gap-1.5 rounded-[10px] text-[13px] font-medium transition"
+    [class]="selected ? 'bg-raised text-text shadow-soft' : 'text-muted hover:text-text'"
+    [attr.aria-selected]="selected"
     (click)="active.set(t.id)"
   >
+    <app-icon [name]="t.icon" class="size-4" />
     {{ t.label }}
 
     @switch (t.id) {
       @case ('lan') {
-        <span class="badge bg-muted/18 text-muted">{{ lan.devices().length }}</span>
+        @if (lan.devices().length) {
+          <span class="badge bg-border/70 text-muted">{{ lan.devices().length }}</span>
+        }
         @if (lan.peerCount()) {
-          <span class="badge bg-ok/18 text-ok">{{ lan.peerCount() }} NetWatch</span>
+          <span class="badge bg-ok/12 text-ok" title="NetWatch-ის მომხმარებლები">{{ lan.peerCount() }}</span>
         }
       }
       @case ('speed') {
         @if (speed.running()) {
-          <span class="badge animate-blink-text bg-accent/18 text-accent">…</span>
+          <span class="relative flex size-1.5">
+            <span class="absolute inset-0 animate-ping-soft rounded-full bg-accent"></span>
+            <span class="relative size-1.5 rounded-full bg-accent"></span>
+          </span>
         }
       }
     }

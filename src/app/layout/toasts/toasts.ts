@@ -6,18 +6,17 @@ import { ToastService } from '../../core/toast.service';
   selector: 'app-toasts',
   template: `
     @for (t of toast.toasts(); track t.id) {
-      <div
-        class="animate-toast-in cursor-pointer rounded-xl px-3.5 py-3 text-sm font-medium text-white shadow-[0_8px_24px_rgb(0_0_0/0.2)]"
-        [class]="t.online ? 'bg-ok-strong' : 'bg-bad-strong'"
+      <button
+        class="flex animate-toast-in items-center gap-2.5 rounded-full bg-text py-2.5 pr-4 pl-3.5 text-left text-[13px] font-medium text-bg shadow-lg"
         (click)="toast.dismiss(t.id)"
       >
+        <span class="size-2 shrink-0 rounded-full" [class]="t.online ? 'bg-ok' : 'bg-bad'"></span>
         {{ t.text }}
-      </div>
+      </button>
     }
   `,
   host: {
-    class:
-      'fixed bottom-4 left-1/2 z-10 flex w-[min(420px,calc(100vw-32px))] -translate-x-1/2 flex-col gap-2',
+    class: 'fixed inset-x-0 bottom-5 z-10 flex flex-col items-center gap-2 px-4',
   },
 })
 export class Toasts {

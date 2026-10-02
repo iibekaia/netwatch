@@ -7,37 +7,39 @@
   (refresh)="speed.refreshProvider()"
 />
 
-<div class="card flex flex-col gap-4">
-  <div class="grid grid-cols-2 gap-2.5">
-    <div class="flex flex-col gap-0.5">
+<div class="card flex flex-col gap-5 p-5">
+  <div class="grid grid-cols-2 divide-x divide-border">
+    <div class="flex flex-col gap-2 pr-4">
       <span class="caption">Ping</span>
-      <span class="stat" [class.text-accent]="phase === 'ping'">{{ fmt(live.ping, 0) }}<small>ms</small></span>
+      <span class="stat" [class.text-accent]="phase === 'ping'" [class.text-muted/40]="live.ping === undefined">{{ fmt(live.ping, 0) }}<small>ms</small></span>
     </div>
-    <div class="flex flex-col gap-0.5">
+    <div class="flex flex-col gap-2 pl-4">
       <span class="caption">Jitter</span>
-      <span class="stat" [class.text-accent]="phase === 'ping'">{{ fmt(live.jitter, 0) }}<small>ms</small></span>
+      <span class="stat" [class.text-accent]="phase === 'ping'" [class.text-muted/40]="live.jitter === undefined">{{ fmt(live.jitter, 0) }}<small>ms</small></span>
     </div>
   </div>
 
-  <app-speed-meter label="ჩამოტვირთვა" icon="↓" [value]="live.download" [active]="phase === 'download'" />
-  <app-speed-meter label="ატვირთვა" icon="↑" color="ok" [value]="live.upload" [active]="phase === 'upload'" />
-
-  @if (speed.running()) {
-    <div class="h-[3px] overflow-hidden rounded-full bg-muted/16" aria-hidden="true">
-      <span class="block h-full bg-accent transition-[width] duration-200 ease-linear" [style.width.%]="overallProgress()"></span>
-    </div>
-  }
+  <app-speed-meter label="ჩამოტვირთვა" icon="arrow-down" [value]="live.download" [active]="phase === 'download'" />
+  <app-speed-meter label="ატვირთვა" icon="arrow-up" color="ok" [value]="live.upload" [active]="phase === 'upload'" />
 
   @if (!speed.running() && live.download !== undefined) {
-    <p class="text-[13px]">{{ verdict() }}</p>
+    <p class="rounded-xl bg-subtle px-3.5 py-2.5 text-[13px]">{{ verdict() }}</p>
   }
   @if (speed.error(); as err) {
-    <p class="text-[13px] text-bad">{{ err }}</p>
+    <p class="rounded-xl bg-bad/10 px-3.5 py-2.5 text-[13px] text-bad">{{ err }}</p>
   }
 </div>
 
 @if (speed.running()) {
-  <button class="btn-danger" (click)="speed.cancel()">გაჩერება · {{ phaseLabel() }}</button>
+  <!-- გაჩერების ღილაკი, რომლის ფონი პროგრესად ივსება -->
+  <button class="btn-danger relative overflow-hidden" (click)="speed.cancel()">
+    <span
+      class="absolute inset-y-0 left-0 bg-bad/10 transition-[width] duration-200 ease-linear"
+      [style.width.%]="overallProgress()"
+      aria-hidden="true"
+    ></span>
+    <span class="relative">გაჩერება · {{ phaseLabel() }}</span>
+  </button>
 } @else {
   <button class="btn-primary" (click)="speed.run()" [disabled]="conn.online() === false">
     {{ speed.history().length ? 'თავიდან გაზომვა' : 'სიჩქარის გაზომვა' }}
@@ -45,10 +47,10 @@
 }
 
 @if (speed.history().length) {
-  <app-speed-history [results]="speed.history()" />
+  <app-speed-history class="mt-2" [results]="speed.history()" />
 }
 
-<p class="text-center text-[11px] text-muted">
-  ტესტი Cloudflare-ის უახლოეს სერვერთან ტარდება (დაახლ. 20 წამი). ერთი გაზომვა
-  ინტერნეტის სიჩქარის მიხედვით რამდენიმე ათეულიდან რამდენიმე ასეულ MB-მდე ხარჯავს.
+<p class="px-4 text-center text-[11px] leading-relaxed text-muted">
+  ტესტი Cloudflare-ის უახლოეს სერვერთან ტარდება (დაახლ. 20 წამი) და სიჩქარის მიხედვით
+  რამდენიმე ათეულიდან რამდენიმე ასეულ MB-მდე ტრაფიკს ხარჯავს.
 </p>

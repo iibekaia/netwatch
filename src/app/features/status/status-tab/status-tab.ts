@@ -6,19 +6,9 @@ import { EventLog } from '../event-log/event-log';
 
 /** ფერები მდგომარეობის მიხედვით (Tailwind კლასები) */
 const TONES = {
-  online: { card: 'border-border bg-card', text: 'text-ok', bg: 'bg-ok', dot: 'bg-ok ring-6 ring-ok/20' },
-  offline: {
-    card: 'border-bad/35 bg-bad-bg',
-    text: 'text-bad',
-    bg: 'bg-bad',
-    dot: 'bg-bad ring-6 ring-bad/20',
-  },
-  unknown: {
-    card: 'border-border bg-card',
-    text: 'text-muted',
-    bg: 'bg-muted',
-    dot: 'bg-muted ring-6 ring-muted/20',
-  },
+  online: { card: '', text: 'text-ok', halo: 'bg-ok/10', dot: 'bg-ok' },
+  offline: { card: 'border-bad/25! bg-bad/5!', text: 'text-bad', halo: 'bg-bad/10', dot: 'bg-bad' },
+  unknown: { card: '', text: 'text-muted', halo: 'bg-subtle', dot: 'bg-muted' },
 };
 
 /** ტაბი „კავშირი“: მიმდინარე მდგომარეობა, მეტრიკები, მოვლენების ისტორია */
@@ -26,7 +16,7 @@ const TONES = {
   selector: 'app-status-tab',
   imports: [EventLog],
   templateUrl: './status-tab.html',
-  host: { class: 'flex min-h-0 flex-1 flex-col gap-4' },
+  host: { class: 'flex min-h-0 flex-1 flex-col gap-3' },
 })
 export class StatusTab {
   protected readonly conn = inject(ConnectionService);

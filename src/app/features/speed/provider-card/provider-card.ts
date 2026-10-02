@@ -1,9 +1,11 @@
 import { Component, computed, input, output } from '@angular/core';
 import { ProviderInfo } from '../../../core/netwatch.types';
+import { Icon } from '../../../shared/icon';
 
 /** პროვაიდერის ინფო: სახელი, საჯარო IP, ASN, მდებარეობა, ტესტის სერვერი */
 @Component({
   selector: 'app-provider-card',
+  imports: [Icon],
   templateUrl: './provider-card.html',
   host: { class: 'card block' },
 })

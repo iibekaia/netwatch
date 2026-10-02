@@ -1,27 +1,24 @@
 import { Component, computed, input } from '@angular/core';
 import { LanDevice } from '../../../core/netwatch.types';
+import { Icon, IconName } from '../../../shared/icon';
 
 const PLATFORMS: Record<string, string> = { win32: 'Windows', darwin: 'macOS', linux: 'Linux' };
+const PHONE_NAME = /iphone|ipad|android|galaxy|redmi|pixel/i;
+// Apple-ის კომპიუტრებიც შემთხვევით MAC-ს იყენებენ — ამიტომ სახელი MAC-ზე ადრე მოწმდება
+const COMPUTER_NAME = /^mac\b|macbook|imac|desktop|laptop|^pc\b|-pc\b/i;
 
-/** ერთი მოწყობილობის ბარათი. NetWatch-ის მომხმარებელი — მწვანედ */
+/** ერთი მოწყობილობის რიგი სიაში. NetWatch-ის მომხმარებელი — მწვანე ფონით */
 @Component({
   selector: 'app-device-card',
+  imports: [Icon],
   templateUrl: './device-card.html',
   host: {
-    class:
-      'grid animate-slide-in grid-cols-[auto_1fr] items-start gap-3 rounded-[10px] border bg-card px-3 py-2.5 text-[13px]',
-    '[class]': 'hostTone()',
+    class: 'grid animate-fade-in grid-cols-[auto_1fr] items-center gap-3 px-4 py-3',
+    '[class.bg-ok/5]': '!!device().peer',
   },
 })
 export class DeviceCard {
   readonly device = input.required<LanDevice>();
-
-  protected readonly hostTone = computed(() => {
-    const d = this.device();
-    if (d.peer) return 'border-ok/55 bg-ok/9 shadow-[inset_3px_0_0_var(--ok)]';
-    if (d.self) return 'border-accent/40';
-    return 'border-border';
-  });
 
   protected readonly name = computed(() => {
     const d = this.device();
@@ -33,12 +30,19 @@ export class DeviceCard {
     );
   });
 
-  protected readonly icon = computed(() => {
+  protected readonly icon = computed<IconName>(() => {
     const d = this.device();
-    if (d.gateway) return '📶';
-    if (d.self || d.peer || d.netbiosName) return '💻';
-    if (d.randomMac || /iphone|ipad|android|galaxy|redmi|pixel/i.test(d.hostname ?? '')) return '📱';
-    return '🔌';
+    if (d.gateway) return 'router';
+    if (d.self || d.peer || d.netbiosName || COMPUTER_NAME.test(d.hostname ?? '')) return 'laptop';
+    if (d.randomMac || PHONE_NAME.test(d.hostname ?? '')) return 'phone';
+    return 'chip';
+  });
+
+  protected readonly iconTone = computed(() => {
+    const d = this.device();
+    if (d.peer) return 'bg-ok/12 text-ok';
+    if (d.self) return 'bg-accent/10 text-accent';
+    return 'bg-subtle text-muted';
   });
 
   /** დამატებითი ინფო, რომელიც სათაურში არ ჩანს */

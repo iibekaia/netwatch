@@ -1,22 +1,32 @@
-<div class="flex items-start justify-between">
-  <div class="flex min-w-0 flex-col gap-0.5">
+<div class="flex items-start gap-3">
+  <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-subtle text-muted" aria-hidden="true">
+    <app-icon name="globe" class="size-5" />
+  </span>
+  <div class="flex min-w-0 flex-1 flex-col">
     <span class="caption">პროვაიდერი</span>
-    <strong class="truncate text-[17px]">
+    <strong class="truncate text-base font-semibold tracking-tight">
       {{ provider()?.isp ?? (loading() ? 'იტვირთება…' : '—') }}
     </strong>
     @if (provider()?.network; as network) {
       <span class="truncate text-xs text-muted">{{ network }}</span>
     }
   </div>
-  <button class="btn-link" (click)="refresh.emit()" [disabled]="loading()">განახლება</button>
+  <button
+    class="grid size-8 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-subtle hover:text-text"
+    title="განახლება"
+    (click)="refresh.emit()"
+    [disabled]="loading()"
+  >
+    <app-icon name="refresh" class="size-4" [class.animate-spin]="loading()" />
+  </button>
 </div>
 
 @if (rows().length) {
-  <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5">
+  <dl class="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-border pt-4">
     @for (r of rows(); track r.label) {
       <div class="min-w-0">
-        <dt class="text-[11px] text-muted">{{ r.label }}</dt>
-        <dd class="mt-0.5 truncate text-[13px]" [class.font-mono]="r.mono">{{ r.value || '—' }}</dd>
+        <dt class="caption">{{ r.label }}</dt>
+        <dd class="mt-0.5 truncate text-[13px] font-medium" [class.font-mono]="r.mono">{{ r.value || '—' }}</dd>
       </div>
     }
   </dl>
