@@ -10,18 +10,34 @@ npm start      # Angular-ის build + Electron
 npm run dev    # ng serve + Electron, ცვლილებები ცოცხლად ჩანს, DevTools ავტომატურად იხსნება
 ```
 
-## Windows-ის exe (ინსტალერი)
+## გადმოწერა და ინსტალაცია (Windows / macOS / Linux)
 
-**გადმოწერა:** GitHub → [Releases](https://github.com/iibekaia/netwatch/releases) → ბოლო ვერსია:
+GitHub → [Releases](https://github.com/iibekaia/netwatch/releases) → ბოლო ვერსია. ბმული ყოველთვის ბოლო ვერსიას გადმოწერს:
 
-- `NetWatch-Setup-x.y.z.exe` — ინსტალერი (Start მენიუ + Desktop shortcut, Uninstall)
-- `NetWatch-Portable-x.y.z.exe` — ინსტალაციის გარეშე, პირდაპირ ეშვება
+| სისტემა | ფაილი | პირდაპირი ბმული |
+|---|---|---|
+| Windows | `NetWatch-Setup.exe`: ინსტალერი (Start მენიუ, Desktop shortcut, Uninstall) | [გადმოწერა](https://github.com/iibekaia/netwatch/releases/latest/download/NetWatch-Setup.exe) |
+| Windows | `NetWatch-Portable.exe`: ინსტალაციის გარეშე | [გადმოწერა](https://github.com/iibekaia/netwatch/releases/latest/download/NetWatch-Portable.exe) |
+| macOS (Intel + Apple Silicon) | `NetWatch-mac.dmg` | [გადმოწერა](https://github.com/iibekaia/netwatch/releases/latest/download/NetWatch-mac.dmg) |
+| Linux (x64) | `NetWatch-linux.AppImage` | [გადმოწერა](https://github.com/iibekaia/netwatch/releases/latest/download/NetWatch-linux.AppImage) |
 
-exe ხელმოწერილი არ არის, ამიტომ Windows SmartScreen გააფრთხილებს: **More info → Run anyway**.
+აპი ხელმოწერილი არ არის, ამიტომ პირველ გაშვებაზე სისტემა გააფრთხილებს:
+
+- **Windows**: SmartScreen → **More info → Run anyway**.
+- **macOS**: გახსენი `.dmg` და NetWatch გადაიტანე **Applications**-ში. პირველ გაშვებაზე გამოჩნდება „NetWatch can't be opened“ → **System Settings → Privacy & Security → Open Anyway**. ან Terminal-ში:
+  ```bash
+  xattr -cr /Applications/NetWatch.app
+  ```
+  ქსელის სკანირებისას macOS **ლოკალური ქსელის ნებართვას** ითხოვს. დააჭირე **Allow**.
+- **Linux**: ფაილს გაშვების უფლება მიეცი და გაუშვი:
+  ```bash
+  chmod +x NetWatch-linux.AppImage && ./NetWatch-linux.AppImage
+  ```
+  ზოგ დისტრიბუტივს (Ubuntu 22.04+) AppImage-ისთვის `libfuse2` სჭირდება: `sudo apt install libfuse2`.
 
 **ახალი ვერსიის გამოშვება:** `package.json`-ში ცვლი `"version"`-ს (მაგ. `1.0.2` → `1.0.3`), აკეთებ commit-ს და master-ზე push-ს. თეგს ხელით არ ქმნი.
 
-GitHub Actions (`.github/workflows/release.yml`) ნახავს, რომ Release `v1.0.3` ჯერ არ არსებობს. თვითონ შექმნის თეგს და Release-ს, Windows-ზე ააწყობს exe-ს და დაამაგრებს. თუ `package.json` შეიცვალა, მაგრამ ვერსია იგივე დარჩა (მაგ. დაემატა dependency), აწყობა გამოტოვდება.
+GitHub Actions (`.github/workflows/release.yml`) ნახავს, რომ Release `v1.0.3` ჯერ არ არსებობს. Windows-ზე, macOS-ზე და Linux-ზე **პარალელურად** ააწყობს, თვითონ შექმნის თეგს და Release-ს და ყველა ფაილს დაამაგრებს. ერთი სისტემის აწყობა თუ ჩავარდა, დანარჩენები მაინც გამოქვეყნდება. თუ `package.json` შეიცვალა, მაგრამ ვერსია იგივე დარჩა (მაგ. დაემატა dependency), აწყობა გამოტოვდება.
 
 ვერსიის გაზრდა ბრძანებითაც შეიძლება. `--no-git-tag-version` ნიშნავს, რომ თეგს workflow შექმნის:
 
@@ -29,7 +45,14 @@ GitHub Actions (`.github/workflows/release.yml`) ნახავს, რომ R
 npm version patch --no-git-tag-version
 ```
 
-**ლოკალურად აწყობა:** `npm run dist` → ფაილები `release/` საქაღალდეში.
+**ლოკალურად აწყობა** (ფაილები `release/` საქაღალდეში):
+
+```bash
+npm run dist          # მიმდინარე სისტემისთვის
+npm run dist:win      # Windows
+npm run dist:mac      # macOS (მხოლოდ Mac-ზე)
+npm run dist:linux    # Linux (Linux-ზე ან macOS-ზე)
+```
 
 ## Inspect / DevTools
 

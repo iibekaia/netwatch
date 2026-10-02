@@ -1,14 +1,18 @@
-# Windows-ის exe-ს აწყობა და GitHub Release-ზე ატვირთვა.
+# Windows / macOS / Linux build-ები და GitHub Release.
 #
 # ძირითადი გზა: package.json-ში ცვლი "version"-ს და master-ზე აგზავნი (push).
-# თუ Release v<version> ჯერ არ არსებობს, workflow თვითონ შექმნის თეგს და Release-ს
-# და exe-ს დაამაგრებს. ვერსია თუ არ შეცვლილა, აწყობა გამოტოვდება.
+# თუ Release v<version> ჯერ არ არსებობს, სამივე სისტემაზე პარალელურად აეწყობა,
+# შემდეგ შეიქმნება თეგი და Release და ყველა ფაილი დაემაგრება:
+#   NetWatch-Setup.exe, NetWatch-Portable.exe   — Windows
+#   NetWatch-mac.dmg                            — macOS (Intel + Apple Silicon)
+#   NetWatch-linux.AppImage                     — Linux
+# ვერსია თუ არ შეცვლილა, აწყობა გამოტოვდება.
 #
 # ასევე იშვება:
-#   - როცა GitHub-ის საიტზე Release-ს ხელით ქმნი — exe ემაგრება იმ Release-ს
-#   - ხელით: Actions → Build Windows → Run workflow
+#   - როცა GitHub-ის საიტზე Release-ს ხელით ქმნი — ფაილები ემაგრება იმ Release-ს
+#   - ხელით: Actions → Build → Run workflow
 #     (tag ცარიელი = package.json-ის ვერსია; ან მიუთითე არსებული, მაგ. v1.0.0)
-name: Build Windows
+name: Build
 
 on:
   push:
@@ -62,16 +66,30 @@ jobs:
             echo "build=true" >> "$GITHUB_OUTPUT"
           fi
 
+  # სამი სისტემა პარალელურად; თითოეული თავის ფაილებს Artifacts-ში ტვირთავს
   build:
     needs: version
     if: needs.version.outputs.build == 'true'
-    runs-on: windows-latest
-    # ერთი და იგივე ვერსია ორჯერ პარალელურად არ აეწყოს
-    concurrency:
-      group: build-${{ needs.version.outputs.tag }}
-      cancel-in-progress: false
+    strategy:
+      fail-fast: false # ერთის ჩავარდნა დანარჩენებს არ აჩერებს
+      matrix:
+        include:
+          - name: windows
+            os: windows-latest
+            script: dist:win
+            files: release/*.exe
+          - name: mac
+            os: macos-latest
+            script: dist:mac
+            files: release/*.dmg
+          - name: linux
+            os: ubuntu-latest
+            script: dist:linux
+            files: release/*.AppImage
+    runs-on: ${{ matrix.os }}
     env:
-      TAG: ${{ needs.version.outputs.tag }}
+      # ხელმოწერის სერტიფიკატს არ ვეძებთ — macOS-ზე ad-hoc ხელმოწერა (identity "-")
+      CSC_IDENTITY_AUTO_DISCOVERY: false
     steps:
       - uses: actions/checkout@v4
         with:
@@ -84,20 +102,39 @@ jobs:
 
       - run: npm ci
 
-      - name: Build exe
-        run: npm run dist
+      - name: Build (${{ matrix.name }})
+        run: npm run ${{ matrix.script }}
 
-      # ყოველთვის ინახება Actions-ის გვერდზე (Artifacts)
       - uses: actions/upload-artifact@v4
         with:
-          name: NetWatch-${{ env.TAG }}
-          path: release/*.exe
+          name: NetWatch-${{ needs.version.outputs.tag }}-${{ matrix.name }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+
+  # ყველა ფაილი ერთად — ერთი Release (პარალელური job-ები ერთმანეთს რომ არ შეეჯახონ)
+  release:
+    needs: [version, build]
+    # ერთი სისტემა თუ ჩავარდა, დანარჩენები მაინც გამოქვეყნდება
+    if: always() && needs.version.outputs.build == 'true' && !cancelled()
+    runs-on: ubuntu-latest
+    concurrency:
+      group: release-${{ needs.version.outputs.tag }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release
+          merge-multiple: true
+
+      - name: Files
+        run: ls -la release
 
       # თეგი თუ არ არსებობს — შეიქმნება ამ commit-ზე; Release — ასევე
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.TAG }}
+          tag_name: ${{ needs.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
-          files: release/*.exe
+          files: release/*
           generate_release_notes: true
+          fail_on_unmatched_files: true

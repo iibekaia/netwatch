@@ -1,5 +1,6 @@
 const dgram = require('dgram');
 const dns = require('dns').promises;
+const fs = require('fs').promises;
 const os = require('os');
 const { execFile } = require('child_process');
 
@@ -163,6 +164,9 @@ function parseNbstat(buf) {
 // ───────── ARP / gateway / DNS ─────────
 
 function readArp() {
+  // Linux: ბირთვის ცხრილი პირდაპირ (arp/net-tools ახალ დისტრიბუტივებზე ხშირად არ არის დაყენებული)
+  if (process.platform === 'linux') return readProcArp();
+
   return run('arp', ['-a']).then((out) => {
     const entries = [];
     // Windows: "192.168.1.1   48-55-41-73-87-78   dynamic"
@@ -178,11 +182,50 @@ function readArp() {
   });
 }
 
+/**
+ * /proc/net/arp:
+ *   IP address    HW type  Flags  HW address          Mask  Device
+ *   192.168.1.1   0x1      0x2    48:55:41:73:87:78   *     wlan0
+ * Flags 0x0 — მისამართი ჯერ არ გაირკვა (მოწყობილობამ არ უპასუხა).
+ */
+async function readProcArp() {
+  let text = '';
+  try {
+    text = await fs.readFile('/proc/net/arp', 'utf8');
+  } catch {
+    return [];
+  }
+  const entries = [];
+  for (const line of text.split('\n').slice(1)) {
+    const [ip, , flags, hw] = line.trim().split(/\s+/);
+    if (!ip || !hw || flags === '0x0') continue;
+    const mac = normalizeMac(hw);
+    if (mac === '00:00:00:00:00:00' || parseInt(mac.slice(0, 2), 16) & 1) continue;
+    entries.push({ ip, mac });
+  }
+  return entries;
+}
+
 async function defaultGateway() {
   if (process.platform === 'win32') {
     const out = await run('route', ['print', '-4', '0.0.0.0']);
     return out.match(/^\s*0\.0\.0\.0\s+0\.0\.0\.0\s+(\d{1,3}(?:\.\d{1,3}){3})/m)?.[1] ?? null;
   }
+  if (process.platform === 'linux') {
+    // /proc/net/route: Destination 00000000 = default; Gateway — hex, little-endian ("0101A8C0" → 192.168.1.1)
+    try {
+      const text = await fs.readFile('/proc/net/route', 'utf8');
+      for (const line of text.split('\n').slice(1)) {
+        const [, dest, gw] = line.trim().split(/\s+/);
+        if (dest === '00000000' && gw && gw !== '00000000') {
+          return toIp(parseInt(gw.match(/../g).reverse().join(''), 16));
+        }
+      }
+    } catch {
+      // ქვემოთ — netstat
+    }
+  }
+  // macOS: "default   192.168.1.1   UGScg   en0"
   const out = await run('netstat', ['-rn']);
   return out.match(/^(?:default|0\.0\.0\.0)\s+(\d{1,3}(?:\.\d{1,3}){3})/m)?.[1] ?? null;
 }

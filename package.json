@@ -8,7 +8,10 @@
     "electron": "electron .",
     "build": "ng build",
     "test": "ng test",
-    "dist": "ng build && electron-builder --win"
+    "dist": "ng build && electron-builder",
+    "dist:win": "ng build && electron-builder --win",
+    "dist:mac": "ng build && electron-builder --mac",
+    "dist:linux": "ng build && electron-builder --linux"
   },
   "prettier": {
     "printWidth": 100,
@@ -31,6 +34,7 @@
     "@angular/platform-browser": "^20.3.0",
     "@angular/router": "^20.3.0",
     "@fontsource-variable/noto-sans-georgian": "^5.3.0",
+    "electron-updater": "^6.8.9",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -67,7 +71,8 @@
       "electron/**/*",
       "dist/netwatch/browser/**/*",
       "package.json",
-      "build/icon.ico"
+      "build/icon.ico",
+      "build/icon.png"
     ],
     "win": {
       "target": [
@@ -100,6 +105,40 @@
     "portable": {
       "artifactName": "NetWatch-Portable.${ext}"
     },
-    "publish": null
+    "publish": null,
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "icon": "build/icon-mac.png",
+      "category": "public.app-category.utilities",
+      "identity": "-",
+      "artifactName": "NetWatch-mac.${ext}",
+      "extendInfo": {
+        "NSLocalNetworkUsageDescription": "NetWatch სკანირებს ლოკალურ ქსელს, რომ აჩვენოს მოწყობილობები და NetWatch-ის სხვა მომხმარებლები."
+      }
+    },
+    "dmg": {
+      "title": "NetWatch"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "Network",
+      "synopsis": "ინტერნეტ-კავშირის ლაივ მონიტორი",
+      "artifactName": "NetWatch-linux.${ext}"
+    }
   }
 }

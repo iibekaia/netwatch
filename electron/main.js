@@ -169,7 +169,8 @@ function createWindow() {
     minWidth: 400,
     minHeight: 560,
     title: 'NetWatch',
-    icon: path.join(__dirname, '..', 'build', 'icon.ico'),
+    // macOS-ზე იკონკა აპის bundle-იდან მოდის, აქ — Windows (.ico) და Linux (.png)
+    icon: path.join(__dirname, '..', 'build', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     // მენიუს ზოლი (View / Network) დამალულია — Alt აჩენს, shortcut-ები (Ctrl+K და ა.შ.) მუშაობს
     autoHideMenuBar: true,
     webPreferences: {
