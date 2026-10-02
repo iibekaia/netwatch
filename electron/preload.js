@@ -12,6 +12,9 @@ contextBridge.exposeInMainWorld('netwatch', {
   checkNow: (trigger) => ipcRenderer.invoke('net:check-now', trigger),
   onStatus: (callback) => subscribe('net:status', callback),
   onChange: (callback) => subscribe('net:change', callback),
+  getLan: () => ipcRenderer.invoke('lan:get'),
+  scanLan: () => ipcRenderer.invoke('lan:scan'),
+  onLan: (callback) => subscribe('lan:update', callback),
   toggleDevTools: () => ipcRenderer.send('devtools:toggle'),
   versions: {
     electron: process.versions.electron,

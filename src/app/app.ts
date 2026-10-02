@@ -1,6 +1,8 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ConnectionService } from './connection.service';
+import { LanService } from './lan.service';
+import { LanDevice } from './netwatch.types';
 
 interface Toast {
   id: number;
@@ -16,6 +18,8 @@ interface Toast {
 })
 export class App {
   protected readonly conn = inject(ConnectionService);
+  protected readonly lan = inject(LanService);
+  protected readonly tab = signal<'status' | 'lan'>('status');
   protected readonly toasts = signal<Toast[]>([]);
   protected readonly versions = window.netwatch?.versions;
 
@@ -87,6 +91,45 @@ export class App {
       default:
         return 'მოწმდება…';
     }
+  }
+
+  // ───────── ქსელის მოწყობილობები ─────────
+
+  protected deviceName(d: LanDevice): string {
+    return (
+      d.peer?.host ||
+      d.netbiosName ||
+      d.hostname ||
+      (d.gateway ? 'როუტერი' : d.randomMac ? 'ტელეფონი / პლანშეტი' : 'უცნობი მოწყობილობა')
+    );
+  }
+
+  protected kindIcon(d: LanDevice): string {
+    if (d.gateway) return '📶';
+    if (d.self || d.peer || d.netbiosName) return '💻';
+    if (d.randomMac || /iphone|ipad|android|galaxy|redmi|pixel/i.test(d.hostname ?? '')) return '📱';
+    return '🔌';
+  }
+
+  /** დამატებითი ინფო, რომელიც სათაურში არ ჩანს */
+  protected extraInfo(d: LanDevice): string {
+    const title = this.deviceName(d);
+    const parts: string[] = [];
+    if (d.hostname && d.hostname !== title) parts.push(`DNS: ${d.hostname}`);
+    if (d.netbiosName && d.netbiosName !== title) parts.push(`NetBIOS: ${d.netbiosName}`);
+    if (d.workgroup) parts.push(`ჯგუფი: ${d.workgroup}`);
+    if (d.randomMac) parts.push('შემთხვევითი MAC');
+    return parts.join(' · ');
+  }
+
+  protected platformName(p: string): string {
+    return { win32: 'Windows', darwin: 'macOS', linux: 'Linux' }[p] ?? p;
+  }
+
+  protected prefix(netmask: string): number {
+    return netmask
+      .split('.')
+      .reduce((n, part) => n + Number(part).toString(2).replace(/0/g, '').length, 0);
   }
 
   protected dismiss(id: number): void {

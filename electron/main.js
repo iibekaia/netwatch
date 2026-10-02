@@ -1,6 +1,8 @@
 const path = require('path');
 const { app, BrowserWindow, ipcMain, Menu, Notification, powerMonitor } = require('electron');
 const { ConnectionMonitor } = require('./connection-monitor');
+const lanScanner = require('./lan-scanner');
+const { PeerDiscovery } = require('./peer-discovery');
 
 // --dev: Angular იტვირთება ng serve-დან (http://localhost:4200), DevTools ავტომატურად იხსნება
 const isDev = process.argv.includes('--dev');
@@ -8,6 +10,7 @@ const DEV_URL = 'http://localhost:4200';
 const PROD_INDEX = path.join(__dirname, '..', 'dist', 'netwatch', 'browser', 'index.html');
 
 const monitor = new ConnectionMonitor();
+const peers = new PeerDiscovery({ version: app.getVersion() });
 let win = null;
 
 // ─────────────────────────────────────────────
@@ -30,6 +33,8 @@ function handleOnline(status, prev) {
     notify('ინტერნეტი აღდგა', `კავშირი არ იყო ${downFor} წამი.`);
   }
   win?.flashFrame(false);
+  peers.announce();
+  scanLan();
 }
 
 function handleChange(status) {
@@ -45,6 +50,56 @@ monitor.on('status', (status) => {
   if (win && !win.isDestroyed()) win.webContents.send('net:status', status);
 });
 
+// ─────────────────────────────────────────────
+//  ლოკალური ქსელი — მოწყობილობები და NetWatch-ის სხვა მომხმარებლები
+// ─────────────────────────────────────────────
+
+const LAN_SCAN_INTERVAL_MS = 60000;
+let lanScan = null; // ბოლო სკანირების შედეგი
+let lanScanning = null; // მიმდინარე სკანირების Promise
+let lanTimer = null;
+
+function lanState() {
+  const peerList = peers.list();
+  const byIp = new Map();
+  for (const p of peerList) for (const ip of p.addresses) if (!byIp.has(ip)) byIp.set(ip, p);
+  const devices = (lanScan?.devices ?? []).map((d) => ({ ...d, peer: byIp.get(d.ip) ?? null }));
+  // NetWatch-მა უპასუხა, მაგრამ სკანირებაში არ ჩანს (მაგ. სხვა subnet-იდან)
+  for (const p of peerList) {
+    if (!devices.some((d) => d.peer?.id === p.id)) devices.push({ ip: p.ip, mac: null, peer: p });
+  }
+  return {
+    scanning: !!lanScanning,
+    scannedAt: lanScan?.scannedAt ?? null,
+    subnets: lanScan?.subnets ?? [],
+    gateway: lanScan?.gateway ?? null,
+    selfId: peers.id,
+    devices,
+  };
+}
+
+function sendLan() {
+  if (win && !win.isDestroyed()) win.webContents.send('lan:update', lanState());
+}
+
+function scanLan() {
+  if (lanScanning) return lanScanning;
+  lanScanning = lanScanner
+    .scan({ onProbe: (ip) => peers.probe(ip) })
+    .then((result) => (lanScan = result))
+    .catch((err) => console.warn('[lan] scan failed', err))
+    .finally(() => {
+      lanScanning = null;
+      sendLan();
+      clearTimeout(lanTimer);
+      lanTimer = setTimeout(scanLan, LAN_SCAN_INTERVAL_MS);
+    });
+  sendLan();
+  return lanScanning;
+}
+
+peers.on('change', sendLan);
+
 function notify(title, body) {
   if (Notification.isSupported()) new Notification({ title, body }).show();
 }
@@ -57,6 +112,11 @@ ipcMain.handle('net:get-status', () => monitor.getStatus());
 ipcMain.handle('net:check-now', async (_e, trigger = 'manual') => {
   await monitor.checkNow(trigger);
   return monitor.getStatus();
+});
+ipcMain.handle('lan:get', () => lanState());
+ipcMain.handle('lan:scan', async () => {
+  await scanLan();
+  return lanState();
 });
 ipcMain.on('devtools:toggle', () => win?.webContents.toggleDevTools());
 
@@ -146,9 +206,15 @@ app.whenReady().then(() => {
   buildMenu();
   createWindow();
   monitor.start();
+  peers.start();
+  scanLan();
 
   // ძილიდან გაღვიძება / ეკრანის განბლოკვა — მაშინვე ვამოწმებთ
-  powerMonitor.on('resume', () => monitor.checkNow('resume'));
+  powerMonitor.on('resume', () => {
+    monitor.checkNow('resume');
+    peers.announce();
+    scanLan();
+  });
   powerMonitor.on('unlock-screen', () => monitor.checkNow('unlock'));
 
   app.on('activate', () => {
@@ -158,5 +224,7 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   monitor.stop();
+  peers.stop();
+  clearTimeout(lanTimer);
   if (process.platform !== 'darwin') app.quit();
 });

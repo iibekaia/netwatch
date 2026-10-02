@@ -11,68 +11,154 @@
     }
   </header>
 
-  <section class="status" [class]="stateClass()" aria-live="polite">
-    <div class="pulse" aria-hidden="true">
-      <span class="dot"></span>
-    </div>
-    <p class="state">{{ stateLabel() }}</p>
-    <p class="sub">{{ reasonLabel() }}</p>
-    <p class="duration">
-      {{ conn.online() === false ? 'გათიშულია' : 'ჩართულია' }} უკვე
-      <strong>{{ duration() }}</strong>
-    </p>
-  </section>
+  @if (lan.available) {
+    <nav class="tabs" role="tablist">
+      <button role="tab" [class.active]="tab() === 'status'" [attr.aria-selected]="tab() === 'status'"
+              (click)="tab.set('status')">
+        კავშირი
+      </button>
+      <button role="tab" [class.active]="tab() === 'lan'" [attr.aria-selected]="tab() === 'lan'"
+              (click)="tab.set('lan')">
+        ქსელი
+        <span class="count">{{ lan.devices().length }}</span>
+        @if (lan.peerCount()) {
+          <span class="count peer">{{ lan.peerCount() }} NetWatch</span>
+        }
+      </button>
+    </nav>
+  }
 
-  <section class="metrics">
-    <div class="metric">
-      <span class="label">დაყოვნება</span>
-      <span class="value">
-        {{ conn.status().latencyMs !== null ? conn.status().latencyMs + ' ms' : '—' }}
-      </span>
-    </div>
-    <div class="metric">
-      <span class="label">ბოლო შემოწმება</span>
-      <span class="value">
-        {{ conn.status().lastCheck ? (conn.status().lastCheck | date: 'HH:mm:ss') : '—' }}
-      </span>
-    </div>
-    <div class="metric">
-      <span class="label">ცვლილებები</span>
-      <span class="value">{{ conn.events().length }}</span>
-    </div>
-  </section>
+  @if (tab() === 'status') {
+    <section class="status" [class]="stateClass()" aria-live="polite">
+      <div class="pulse" aria-hidden="true">
+        <span class="dot"></span>
+      </div>
+      <p class="state">{{ stateLabel() }}</p>
+      <p class="sub">{{ reasonLabel() }}</p>
+      <p class="duration">
+        {{ conn.online() === false ? 'გათიშულია' : 'ჩართულია' }} უკვე
+        <strong>{{ duration() }}</strong>
+      </p>
+    </section>
 
-  <div class="actions">
-    <button class="primary" (click)="conn.checkNow()" [disabled]="conn.checking()">
-      {{ conn.checking() ? 'მოწმდება…' : 'შეამოწმე ახლავე' }}
-    </button>
-  </div>
+    <section class="metrics">
+      <div class="metric">
+        <span class="label">დაყოვნება</span>
+        <span class="value">
+          {{ conn.status().latencyMs !== null ? conn.status().latencyMs + ' ms' : '—' }}
+        </span>
+      </div>
+      <div class="metric">
+        <span class="label">ბოლო შემოწმება</span>
+        <span class="value">
+          {{ conn.status().lastCheck ? (conn.status().lastCheck | date: 'HH:mm:ss') : '—' }}
+        </span>
+      </div>
+      <div class="metric">
+        <span class="label">ცვლილებები</span>
+        <span class="value">{{ conn.events().length }}</span>
+      </div>
+    </section>
 
-  <section class="log">
-    <div class="log-head">
-      <h2>მოვლენების ისტორია</h2>
-      @if (conn.events().length) {
-        <button class="link" (click)="conn.clearLog()">გასუფთავება</button>
-      }
+    <div class="actions">
+      <button class="primary" (click)="conn.checkNow()" [disabled]="conn.checking()">
+        {{ conn.checking() ? 'მოწმდება…' : 'შეამოწმე ახლავე' }}
+      </button>
     </div>
 
-    <ul>
-      @for (e of conn.events(); track e.id) {
-        <li [class.on]="e.online" [class.off]="!e.online">
-          <span class="badge">{{ e.online ? 'ჩაირთო' : 'გაითიშა' }}</span>
-          <span class="time">{{ e.at | date: 'HH:mm:ss' }}</span>
-          <span class="meta">
-            {{ reasonText(e.reason) }}
-            @if (e.previousDuration !== null) {
-              · წინა მდგომარეობა {{ formatDuration(e.previousDuration) }}
+    <section class="log">
+      <div class="log-head">
+        <h2>მოვლენების ისტორია</h2>
+        @if (conn.events().length) {
+          <button class="link" (click)="conn.clearLog()">გასუფთავება</button>
+        }
+      </div>
+
+      <ul>
+        @for (e of conn.events(); track e.id) {
+          <li [class.on]="e.online" [class.off]="!e.online">
+            <span class="badge">{{ e.online ? 'ჩაირთო' : 'გაითიშა' }}</span>
+            <span class="time">{{ e.at | date: 'HH:mm:ss' }}</span>
+            <span class="meta">
+              {{ reasonText(e.reason) }}
+              @if (e.previousDuration !== null) {
+                · წინა მდგომარეობა {{ formatDuration(e.previousDuration) }}
+              }
+            </span>
+          </li>
+        } @empty {
+          <li class="empty">ჯერ ცვლილება არ ყოფილა. სცადე Wi-Fi-ის გათიშვა.</li>
+        }
+      </ul>
+    </section>
+  } @else {
+    <section class="lan">
+      <div class="lan-summary">
+        <div>
+          <p class="lan-count">
+            <strong>{{ lan.devices().length }}</strong> მოწყობილობა ქსელში
+            @if (lan.peerCount()) {
+              · <strong class="peer-text">{{ lan.peerCount() }}</strong> NetWatch-ით
             }
-          </span>
-        </li>
-      } @empty {
-        <li class="empty">ჯერ ცვლილება არ ყოფილა. სცადე Wi-Fi-ის გათიშვა.</li>
-      }
-    </ul>
-  </section>
+          </p>
+          <p class="lan-meta">
+            @for (s of lan.state()?.subnets ?? []; track s.address) {
+              <span>{{ s.network }}/{{ prefix(s.netmask) }} · {{ s.iface }}</span>
+            }
+            @if (lan.state()?.scannedAt; as at) {
+              <span>განახლდა {{ at | date: 'HH:mm:ss' }}</span>
+            }
+          </p>
+        </div>
+        <button class="ghost" (click)="lan.scan()" [disabled]="lan.scanning()">
+          {{ lan.scanning() ? 'სკანირება…' : 'სკანირება' }}
+        </button>
+      </div>
+
+      <ul class="devices">
+        @for (d of lan.devices(); track d.ip) {
+          <li class="device" [class.peer]="d.peer" [class.self]="d.self" [class.gw]="d.gateway">
+            <span class="kind" aria-hidden="true">{{ kindIcon(d) }}</span>
+            <div class="info">
+              <div class="name">
+                <span class="title">{{ deviceName(d) }}</span>
+                @if (d.self) {
+                  <span class="tag self">ეს კომპიუტერი</span>
+                }
+                @if (d.gateway) {
+                  <span class="tag gw">როუტერი</span>
+                }
+                @if (d.peer) {
+                  <span class="tag peer">NetWatch {{ d.peer.version }}</span>
+                }
+              </div>
+              @if (d.peer) {
+                <div class="line">👤 {{ d.peer.user }} · {{ d.peer.host }} · {{ platformName(d.peer.platform) }}</div>
+              }
+              <div class="line mono">
+                {{ d.ip }}
+                @if (d.mac) {
+                  · {{ d.mac }}
+                }
+              </div>
+              @if (extraInfo(d); as extra) {
+                <div class="line">{{ extra }}</div>
+              }
+            </div>
+          </li>
+        } @empty {
+          <li class="empty">
+            {{ lan.scanning() ? 'ქსელი სკანირდება…' : 'მოწყობილობები ვერ მოიძებნა' }}
+          </li>
+        }
+      </ul>
+
+      <p class="hint">
+        მწვანედ მონიშნულია ის, ვისაც NetWatch აქვს გაშვებული. ზოგი მოწყობილობა (მაგ. ძილის
+        რეჟიმში მყოფი ტელეფონი) შეიძლება ყოველ სკანირებაზე არ ჩანდეს.
+      </p>
+    </section>
+  }
 
   <footer>
     @if (versions) {
