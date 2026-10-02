@@ -7,27 +7,27 @@
       ></span>
       <h1 class="text-lg font-bold tracking-wide">NetWatch</h1>
     </div>
-    @if (conn.isElectron) {
-      <button class="btn-ghost" (click)="conn.toggleDevTools()" title="F12 / Ctrl+Shift+I">
-        Inspect
-      </button>
-    }
+    <!--    @if (conn.isElectron) {-->
+    <!--      <button class="btn-ghost" (click)="conn.toggleDevTools()" title="F12 / Ctrl+Shift+I">-->
+    <!--        Inspect-->
+    <!--      </button>-->
+    <!--    }-->
   </header>
 
   <!-- ქსელი და სიჩქარე მხოლოდ Electron-შია (ბრაუზერში — მხოლოდ კავშირი) -->
   @if (lan.available) {
-    <app-tab-nav [(active)]="tab" />
+    <app-tab-nav [(active)]="tab"/>
   }
 
   @switch (tab()) {
     @case ('lan') {
-      <app-lan-tab />
+      <app-lan-tab/>
     }
     @case ('speed') {
-      <app-speed-tab />
+      <app-speed-tab/>
     }
     @default {
-      <app-status-tab />
+      <app-status-tab/>
     }
   }
 
@@ -40,4 +40,4 @@
   </footer>
 </main>
 
-<app-toasts />
+<app-toasts/>

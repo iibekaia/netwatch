@@ -170,6 +170,8 @@ function createWindow() {
     minHeight: 560,
     title: 'NetWatch',
     icon: path.join(__dirname, '..', 'build', 'icon.ico'),
+    // მენიუს ზოლი (View / Network) დამალულია — Alt აჩენს, shortcut-ები (Ctrl+K და ა.შ.) მუშაობს
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
