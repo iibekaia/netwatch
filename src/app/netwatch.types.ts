@@ -53,6 +53,40 @@ export interface LanState {
   devices: LanDevice[];
 }
 
+export interface ProviderInfo {
+  ip: string | null;
+  isp: string | null;
+  /** IP-ბლოკის სახელი (თუ პროვაიდერის სახელისგან განსხვავდება) */
+  network: string | null;
+  asn: string | null;
+  city: string | null;
+  region: string | null;
+  country: string | null;
+  /** რომელ სერვერთან ტარდება სიჩქარის ტესტი */
+  server: string | null;
+  at: number;
+}
+
+export type SpeedPhase = 'ping' | 'download' | 'upload';
+
+export interface SpeedProgress {
+  phase: SpeedPhase;
+  /** ping-ზე — ms, download/upload-ზე — Mbps */
+  value: number;
+  /** ეტაპის პროგრესი 0..1 */
+  progress: number;
+}
+
+export interface SpeedResult {
+  at: number;
+  ping: number;
+  jitter: number;
+  download: number;
+  upload: number;
+}
+
+export type SpeedRunResponse = { ok: true; result: SpeedResult } | { ok: false; error: string };
+
 export interface NetwatchApi {
   getStatus(): Promise<NetStatus>;
   checkNow(trigger?: string): Promise<NetStatus>;
@@ -61,6 +95,11 @@ export interface NetwatchApi {
   getLan(): Promise<LanState>;
   scanLan(): Promise<LanState>;
   onLan(cb: (s: LanState) => void): () => void;
+  getProvider(refresh?: boolean): Promise<ProviderInfo | null>;
+  onProvider(cb: (p: ProviderInfo | null) => void): () => void;
+  runSpeedTest(): Promise<SpeedRunResponse>;
+  cancelSpeedTest(): void;
+  onSpeedProgress(cb: (p: SpeedProgress) => void): () => void;
   toggleDevTools(): void;
   versions: { electron: string; chrome: string; node: string };
 }

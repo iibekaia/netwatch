@@ -2,7 +2,8 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ConnectionService } from './connection.service';
 import { LanService } from './lan.service';
-import { LanDevice } from './netwatch.types';
+import { SpeedService } from './speed.service';
+import { LanDevice, ProviderInfo } from './netwatch.types';
 
 interface Toast {
   id: number;
@@ -19,7 +20,47 @@ interface Toast {
 export class App {
   protected readonly conn = inject(ConnectionService);
   protected readonly lan = inject(LanService);
-  protected readonly tab = signal<'status' | 'lan'>('status');
+  protected readonly speed = inject(SpeedService);
+  protected readonly tab = signal<'status' | 'lan' | 'speed'>('status');
+
+  protected readonly gauges = [
+    { key: 'download', label: 'ჩამოტვირთვა', icon: '↓' },
+    { key: 'upload', label: 'ატვირთვა', icon: '↑' },
+  ] as const;
+
+  /** მთლიანი ტესტის პროგრესი: ping 10%, download 45%, upload 45% */
+  protected readonly overallProgress = computed(() => {
+    const p = this.speed.phaseProgress();
+    switch (this.speed.phase()) {
+      case 'ping':
+        return p * 10;
+      case 'download':
+        return 10 + p * 45;
+      case 'upload':
+        return 55 + p * 45;
+      default:
+        return 0;
+    }
+  });
+
+  protected readonly phaseLabel = computed(
+    () =>
+      ({ ping: 'ping-ის გაზომვა', download: 'ჩამოტვირთვა', upload: 'ატვირთვა' })[
+        this.speed.phase() ?? 'ping'
+      ]
+  );
+
+  /** მოკლე შეფასება: რისთვის ჰყოფნის ეს ინტერნეტი */
+  protected readonly verdict = computed(() => {
+    const { download = 0, upload = 0, ping = 999 } = this.speed.live();
+    if (download >= 100 && upload >= 20 && ping <= 30)
+      return 'შესანიშნავი — 4K ვიდეო, თამაშები და დიდი ფაილები უპრობლემოდ.';
+    if (download >= 25 && upload >= 5 && ping <= 60)
+      return 'კარგი — HD ვიდეო, ვიდეოზარები და თამაშები ნორმალურად იმუშავებს.';
+    if (download >= 5 && ping <= 120)
+      return 'საშუალო — ბრაუზინგი და ვიდეოზარი, მაგრამ მაღალ ხარისხზე შეიძლება შეფერხდეს.';
+    return 'სუსტი — ვიდეო და ზარები შეიძლება ჭედავდეს.';
+  });
   protected readonly toasts = signal<Toast[]>([]);
   protected readonly versions = window.netwatch?.versions;
 
@@ -124,6 +165,24 @@ export class App {
 
   protected platformName(p: string): string {
     return { win32: 'Windows', darwin: 'macOS', linux: 'Linux' }[p] ?? p;
+  }
+
+  // ───────── სიჩქარე ─────────
+
+  /** ლოგარითმული სკალა 0–1000 Mbps: 10 → 35%, 100 → 67% */
+  protected barPct(mbps: number | undefined): number {
+    if (!mbps || mbps <= 0) return 0;
+    return Math.min(100, (Math.log10(1 + mbps) / Math.log10(1001)) * 100);
+  }
+
+  protected fmt(v: number | undefined, digits: number): string {
+    if (v === undefined) return '—';
+    return v >= 100 ? Math.round(v).toString() : v.toFixed(digits);
+  }
+
+  protected location(p: ProviderInfo): string {
+    const parts = [p.city, p.region !== p.city ? p.region : null, p.country];
+    return parts.filter(Boolean).join(', ') || '—';
   }
 
   protected prefix(netmask: string): number {

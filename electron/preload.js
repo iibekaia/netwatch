@@ -15,6 +15,11 @@ contextBridge.exposeInMainWorld('netwatch', {
   getLan: () => ipcRenderer.invoke('lan:get'),
   scanLan: () => ipcRenderer.invoke('lan:scan'),
   onLan: (callback) => subscribe('lan:update', callback),
+  getProvider: (refresh) => ipcRenderer.invoke('isp:get', refresh),
+  onProvider: (callback) => subscribe('isp:update', callback),
+  runSpeedTest: () => ipcRenderer.invoke('speed:run'),
+  cancelSpeedTest: () => ipcRenderer.send('speed:cancel'),
+  onSpeedProgress: (callback) => subscribe('speed:progress', callback),
   toggleDevTools: () => ipcRenderer.send('devtools:toggle'),
   versions: {
     electron: process.versions.electron,

@@ -328,7 +328,7 @@ footer {
 /* ── tabs ── */
 .tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 4px;
   padding: 4px;
   background: var(--card);
@@ -478,4 +478,221 @@ li.device.self {
   font-size: 11px;
   color: var(--muted);
   text-align: center;
+}
+
+.count.live {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  animation: blink-text 1s ease-in-out infinite;
+}
+@keyframes blink-text {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* ── speed ── */
+.speed {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.isp-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.isp-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.isp-name strong {
+  font-size: 17px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.isp-grid {
+  margin: 12px 0 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+}
+.isp-grid div {
+  min-width: 0;
+}
+.isp-grid dt {
+  font-size: 11px;
+  color: var(--muted);
+}
+.isp-grid dd {
+  margin: 2px 0 0;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gauges {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ping-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.ping {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.big {
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.big small {
+  margin-left: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.ping.active .big,
+.gauge.active .big {
+  color: var(--accent);
+}
+
+.gauge {
+  --g: var(--accent);
+}
+.gauge.upload {
+  --g: var(--ok);
+}
+.gauge-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+.bar {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted) 16%, transparent);
+  overflow: hidden;
+}
+.fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--g) 55%, transparent), var(--g));
+  transition: width 0.25s ease-out;
+}
+.gauge.active .fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.35), transparent);
+  animation: shimmer 1.2s linear infinite;
+}
+@keyframes shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+/* ლოგარითმული სკალის ნიშნულები: 0, 10, 100, 1000 */
+.scale {
+  position: relative;
+  height: 14px;
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.scale span {
+  position: absolute;
+  transform: translateX(-50%);
+}
+.scale span:nth-child(1) {
+  left: 0;
+  transform: none;
+}
+.scale span:nth-child(2) {
+  left: 34.7%;
+}
+.scale span:nth-child(3) {
+  left: 66.8%;
+}
+.scale span:nth-child(4) {
+  right: 0;
+  transform: none;
+}
+
+.phase-progress {
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted) 16%, transparent);
+  overflow: hidden;
+}
+.phase-progress span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s linear;
+}
+
+.verdict {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text);
+}
+.verdict.bad {
+  color: var(--bad);
+}
+.primary.danger {
+  background: var(--bad);
+  color: #fff;
+}
+
+.history table {
+  width: 100%;
+  margin-top: 8px;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.history th,
+.history td {
+  padding: 5px 6px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+}
+.history th:first-child,
+.history td:first-child {
+  text-align: left;
+}
+.history th {
+  font-weight: 500;
+  color: var(--muted);
 }

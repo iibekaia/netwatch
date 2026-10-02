@@ -25,6 +25,13 @@
           <span class="count peer">{{ lan.peerCount() }} NetWatch</span>
         }
       </button>
+      <button role="tab" [class.active]="tab() === 'speed'" [attr.aria-selected]="tab() === 'speed'"
+              (click)="tab.set('speed')">
+        სიჩქარე
+        @if (speed.running()) {
+          <span class="count live">…</span>
+        }
+      </button>
     </nav>
   }
 
@@ -91,7 +98,7 @@
         }
       </ul>
     </section>
-  } @else {
+  } @else if (tab() === 'lan') {
     <section class="lan">
       <div class="lan-summary">
         <div>
@@ -156,6 +163,107 @@
       <p class="hint">
         მწვანედ მონიშნულია ის, ვისაც NetWatch აქვს გაშვებული. ზოგი მოწყობილობა (მაგ. ძილის
         რეჟიმში მყოფი ტელეფონი) შეიძლება ყოველ სკანირებაზე არ ჩანდეს.
+      </p>
+    </section>
+  } @else {
+    <section class="speed">
+      <div class="isp card">
+        <div class="isp-head">
+          <div class="isp-name">
+            <span class="label">პროვაიდერი</span>
+            <strong>{{ speed.provider()?.isp ?? (speed.providerLoading() ? 'იტვირთება…' : '—') }}</strong>
+            @if (speed.provider()?.network; as network) {
+              <span class="line">{{ network }}</span>
+            }
+          </div>
+          <button class="link" (click)="speed.refreshProvider()" [disabled]="speed.providerLoading()">
+            განახლება
+          </button>
+        </div>
+        @if (speed.provider(); as p) {
+          <dl class="isp-grid">
+            <div><dt>საჯარო IP</dt><dd class="mono">{{ p.ip ?? '—' }}</dd></div>
+            <div><dt>ASN</dt><dd class="mono">{{ p.asn ?? '—' }}</dd></div>
+            <div><dt>მდებარეობა</dt><dd>{{ location(p) }}</dd></div>
+            <div><dt>ტესტის სერვერი</dt><dd>{{ p.server ?? '—' }}</dd></div>
+          </dl>
+        }
+      </div>
+
+      <div class="gauges card">
+        <div class="ping-row">
+          <div class="ping" [class.active]="speed.phase() === 'ping'">
+            <span class="label">Ping</span>
+            <span class="big">{{ fmt(speed.live().ping, 0) }}<small>ms</small></span>
+          </div>
+          <div class="ping" [class.active]="speed.phase() === 'ping'">
+            <span class="label">Jitter</span>
+            <span class="big">{{ fmt(speed.live().jitter, 0) }}<small>ms</small></span>
+          </div>
+        </div>
+
+        @for (g of gauges; track g.key) {
+          <div class="gauge" [class]="g.key" [class.active]="speed.phase() === g.key">
+            <div class="gauge-head">
+              <span class="label">{{ g.icon }} {{ g.label }}</span>
+              <span class="big">{{ fmt(speed.live()[g.key], 1) }}<small>Mbps</small></span>
+            </div>
+            <div class="bar" role="meter" [attr.aria-label]="g.label"
+                 aria-valuemin="0" aria-valuemax="1000" [attr.aria-valuenow]="speed.live()[g.key] ?? 0">
+              <span class="fill" [style.width.%]="barPct(speed.live()[g.key])"></span>
+            </div>
+            <div class="scale" aria-hidden="true">
+              <span>0</span><span>10</span><span>100</span><span>1000</span>
+            </div>
+          </div>
+        }
+
+        @if (speed.running()) {
+          <div class="phase-progress" aria-hidden="true">
+            <span [style.width.%]="overallProgress()"></span>
+          </div>
+        }
+
+        @if (!speed.running() && speed.live().download !== undefined) {
+          <p class="verdict">{{ verdict() }}</p>
+        }
+        @if (speed.error(); as err) {
+          <p class="verdict bad">{{ err }}</p>
+        }
+      </div>
+
+      @if (speed.running()) {
+        <button class="primary danger" (click)="speed.cancel()">გაჩერება · {{ phaseLabel() }}</button>
+      } @else {
+        <button class="primary" (click)="speed.run()" [disabled]="conn.online() === false">
+          {{ speed.history().length ? 'თავიდან გაზომვა' : 'სიჩქარის გაზომვა' }}
+        </button>
+      }
+
+      @if (speed.history().length) {
+        <div class="history">
+          <h2>წინა გაზომვები</h2>
+          <table>
+            <thead>
+              <tr><th>დრო</th><th>↓ Mbps</th><th>↑ Mbps</th><th>Ping</th></tr>
+            </thead>
+            <tbody>
+              @for (r of speed.history(); track r.at) {
+                <tr>
+                  <td>{{ r.at | date: 'dd.MM HH:mm' }}</td>
+                  <td>{{ r.download }}</td>
+                  <td>{{ r.upload }}</td>
+                  <td>{{ r.ping }} ms</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <p class="hint">
+        ტესტი Cloudflare-ის უახლოეს სერვერთან ტარდება (დაახლ. 20 წამი). ერთი გაზომვა
+        ინტერნეტის სიჩქარის მიხედვით რამდენიმე ათეულიდან რამდენიმე ასეულ MB-მდე ხარჯავს.
       </p>
     </section>
   }

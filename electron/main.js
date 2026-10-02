@@ -3,6 +3,7 @@ const { app, BrowserWindow, ipcMain, Menu, Notification, powerMonitor } = requir
 const { ConnectionMonitor } = require('./connection-monitor');
 const lanScanner = require('./lan-scanner');
 const { PeerDiscovery } = require('./peer-discovery');
+const { SpeedTest, providerInfo } = require('./speed-test');
 
 // --dev: Angular იტვირთება ng serve-დან (http://localhost:4200), DevTools ავტომატურად იხსნება
 const isDev = process.argv.includes('--dev');
@@ -11,6 +12,7 @@ const PROD_INDEX = path.join(__dirname, '..', 'dist', 'netwatch', 'browser', 'in
 
 const monitor = new ConnectionMonitor();
 const peers = new PeerDiscovery({ version: app.getVersion() });
+const speedTest = new SpeedTest();
 let win = null;
 
 // ─────────────────────────────────────────────
@@ -35,6 +37,7 @@ function handleOnline(status, prev) {
   win?.flashFrame(false);
   peers.announce();
   scanLan();
+  loadProvider();
 }
 
 function handleChange(status) {
@@ -100,6 +103,28 @@ function scanLan() {
 
 peers.on('change', sendLan);
 
+// ─────────────────────────────────────────────
+//  სიჩქარის ტესტი + პროვაიდერი
+// ─────────────────────────────────────────────
+
+let provider = null; // ბოლოს მიღებული პროვაიდერის ინფო
+let providerLoading = null;
+
+function loadProvider() {
+  providerLoading ??= providerInfo()
+    .then((info) => (provider = { ...info, at: Date.now() }))
+    .catch((err) => console.warn('[isp] failed', err.message))
+    .finally(() => {
+      providerLoading = null;
+      if (win && !win.isDestroyed()) win.webContents.send('isp:update', provider);
+    });
+  return providerLoading;
+}
+
+speedTest.on('progress', (p) => {
+  if (win && !win.isDestroyed()) win.webContents.send('speed:progress', p);
+});
+
 function notify(title, body) {
   if (Notification.isSupported()) new Notification({ title, body }).show();
 }
@@ -118,6 +143,19 @@ ipcMain.handle('lan:scan', async () => {
   await scanLan();
   return lanState();
 });
+ipcMain.handle('isp:get', async (_e, refresh = false) => {
+  if (refresh || !provider) await loadProvider();
+  return provider;
+});
+ipcMain.handle('speed:run', async () => {
+  loadProvider(); // IP/პროვაიდერი შეიძლება შეიცვალა
+  try {
+    return { ok: true, result: await speedTest.run() };
+  } catch (err) {
+    return { ok: false, error: speedTest.running ? 'busy' : String(err?.message ?? err) };
+  }
+});
+ipcMain.on('speed:cancel', () => speedTest.cancel());
 ipcMain.on('devtools:toggle', () => win?.webContents.toggleDevTools());
 
 // ─────────────────────────────────────────────
@@ -208,6 +246,7 @@ app.whenReady().then(() => {
   monitor.start();
   peers.start();
   scanLan();
+  loadProvider();
 
   // ძილიდან გაღვიძება / ეკრანის განბლოკვა — მაშინვე ვამოწმებთ
   powerMonitor.on('resume', () => {
@@ -225,6 +264,7 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   monitor.stop();
   peers.stop();
+  speedTest.cancel();
   clearTimeout(lanTimer);
   if (process.platform !== 'darwin') app.quit();
 });
