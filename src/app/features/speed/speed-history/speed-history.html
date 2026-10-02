@@ -1,0 +1,22 @@
+<h2 class="section-title">წინა გაზომვები</h2>
+
+<table class="mt-2 w-full border-collapse text-xs tabular-nums">
+  <thead>
+    <tr class="text-muted [&>th]:border-b [&>th]:border-border [&>th]:px-1.5 [&>th]:py-[5px] [&>th]:text-right [&>th]:font-medium">
+      <th class="text-left!">დრო</th>
+      <th>↓ Mbps</th>
+      <th>↑ Mbps</th>
+      <th>Ping</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (r of results(); track r.at) {
+      <tr class="[&>td]:border-b [&>td]:border-border [&>td]:px-1.5 [&>td]:py-[5px] [&>td]:text-right">
+        <td class="text-left!">{{ r.at | date: 'dd.MM HH:mm' }}</td>
+        <td>{{ r.download }}</td>
+        <td>{{ r.upload }}</td>
+        <td>{{ r.ping }} ms</td>
+      </tr>
+    }
+  </tbody>
+</table>

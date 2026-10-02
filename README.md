@@ -72,7 +72,7 @@ admin უფლებები საჭირო არ არის. თუ Wi
 
 **Main process** (`electron/main.js`): `handleOffline`, `handleOnline`, `handleChange`. სისტემურ შეტყობინებას აჩვენებს, ფანჯრის სათაურს ცვლის და taskbar-ზე ანათებს.
 
-**Angular** (`src/app/connection.service.ts`):
+**Angular** (`src/app/core/connection.service.ts`):
 
 ```ts
 const conn = inject(ConnectionService);
@@ -93,7 +93,29 @@ electron/
   main.js                 ფანჯარა, DevTools, main-ის ჰენდლერები, IPC
   connection-monitor.js   კავშირის შემოწმების ლოგიკა (EventEmitter)
   preload.js              window.netwatch API (contextBridge)
-src/app/
-  connection.service.ts   Angular სერვისი: signals + ჰენდლერები
-  app.ts / app.html       ინტერფეისი, toast-შეტყობინებები, ისტორია
+  lan-scanner.js          ლოკალური ქსელის სკანირება (NetBIOS + ARP + DNS)
+  peer-discovery.js       NetWatch-ის სხვა ასლების პოვნა (UDP 47821)
+  speed-test.js           სიჩქარის ტესტი + პროვაიდერის ინფო
+
+src/
+  styles.css              Tailwind + თემა (ფერები light/dark) + საერთო კლასები
+                          (btn-primary, btn-ghost, card, caption, stat, tag, badge …)
+  app/
+    app.ts / app.html     ჩარჩო: header, ტაბები, footer + online/offline ჰენდლერები
+    core/                 სერვისები და ტიპები
+      connection.service.ts   კავშირის მდგომარეობა: signals + ჰენდლერები
+      lan.service.ts          ქსელის მოწყობილობები
+      speed.service.ts        სიჩქარის ტესტი, პროვაიდერი, ისტორია
+      toast.service.ts        ამომხტარი შეტყობინებები
+      netwatch.types.ts       window.netwatch API-ის ტიპები
+    shared/format.ts      ფორმატირება (ხანგრძლივობა, რიცხვები, netmask)
+    layout/
+      tab-nav/            ტაბების გადამრთველი
+      toasts/             შეტყობინებების ჩვენება
+    features/
+      status/   status-tab, event-log
+      lan/      lan-tab, device-card
+      speed/    speed-tab, provider-card, speed-meter, speed-history
 ```
+
+სტილები Tailwind-ის utility კლასებით template-შივე წერია, კომპონენტებს ცალკე `.css` არ აქვთ. ფერები (`bg-card`, `text-muted`, `text-ok`, `bg-bad/15` …) `styles.css`-ის `@theme`-დან მოდის და dark რეჟიმში ავტომატურად იცვლება.

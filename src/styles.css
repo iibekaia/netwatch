@@ -1,3 +1,10 @@
+@import 'tailwindcss';
+
+/* ─────────────────────────────────────────────
+   თემა — ფერები light/dark რეჟიმისთვის.
+   Tailwind-ში ხელმისაწვდომია როგორც bg-card, text-muted, border-border, text-ok, bg-bad/15 …
+   ───────────────────────────────────────────── */
+
 :root {
   --bg: #f5f6f8;
   --card: #ffffff;
@@ -31,15 +38,142 @@
   }
 }
 
-* {
-  box-sizing: border-box;
+@theme inline {
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-ok: var(--ok);
+  --color-ok-strong: var(--ok-strong);
+  --color-bad: var(--bad);
+  --color-bad-strong: var(--bad-strong);
+  --color-bad-bg: var(--bad-bg);
+
+  --font-sans: system-ui, 'Segoe UI', 'Noto Sans Georgian', sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  --animate-slide-in: slide-in 0.25s ease-out;
+  --animate-toast-in: toast-in 0.25s ease-out;
+  --animate-ripple: ripple 2.4s ease-out infinite;
+  --animate-blink: blink 1s ease-in-out infinite;
+  --animate-blink-text: blink-text 1s ease-in-out infinite;
+  --animate-shimmer: shimmer 1.2s linear infinite;
 }
 
-html,
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: system-ui, 'Segoe UI', 'Noto Sans Georgian', sans-serif;
-  -webkit-font-smoothing: antialiased;
+@layer base {
+  html,
+  body {
+    @apply bg-bg font-sans text-text antialiased;
+  }
+  button:not(:disabled) {
+    @apply cursor-pointer;
+  }
+  button:disabled {
+    @apply cursor-default opacity-60;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   საერთო კლასები — რამდენიმე კომპონენტი იყენებს
+   ───────────────────────────────────────────── */
+
+@utility btn-primary {
+  @apply w-full rounded-[10px] bg-accent p-3 font-semibold text-on-accent transition;
+  &:hover:not(:disabled) {
+    @apply brightness-110;
+  }
+}
+@utility btn-danger {
+  @apply w-full rounded-[10px] bg-bad p-3 font-semibold text-white transition;
+}
+@utility btn-ghost {
+  @apply shrink-0 rounded-[10px] border border-border px-3 py-1.5 text-[13px] text-muted transition;
+  &:hover:not(:disabled) {
+    @apply border-muted text-text;
+  }
+}
+@utility btn-link {
+  @apply px-1 py-0.5 text-xs text-muted hover:text-text;
+}
+
+@utility card {
+  @apply rounded-[14px] border border-border bg-card px-4 py-3.5;
+}
+/* პატარა სათაური (UPPERCASE) */
+@utility caption {
+  @apply text-[11px] tracking-wider text-muted uppercase;
+}
+@utility section-title {
+  @apply text-[13px] font-semibold tracking-wider text-muted uppercase;
+}
+/* დიდი რიცხვი (Mbps / ms) */
+@utility stat {
+  @apply text-[26px] leading-tight font-bold tabular-nums;
+  & small {
+    @apply ml-1 text-xs font-medium text-muted;
+  }
+}
+/* მრიცხველი ტაბზე (ფერს კომპონენტი ამატებს) */
+@utility badge {
+  @apply rounded-full px-[7px] py-px text-[11px] tabular-nums;
+}
+/* პატარა ნიშანი ბარათზე (ფერს კომპონენტი ამატებს: bg-ok text-card …) */
+@utility tag {
+  @apply rounded-full px-[7px] py-px text-[10px] font-semibold tracking-wide uppercase;
+}
+/* ცარიელი სიის შეტყობინება */
+@utility empty-state {
+  @apply rounded-[10px] border border-dashed border-border bg-card p-[18px] text-center text-[13px] text-muted;
+}
+
+/* ─────────────────────────────────────────────
+   ანიმაციები (animate-* კლასები)
+   ───────────────────────────────────────────── */
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes ripple {
+  from {
+    transform: scale(0.4);
+    opacity: 0.45;
+  }
+  to {
+    transform: scale(1.1);
+    opacity: 0;
+  }
+}
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+@keyframes blink-text {
+  50% {
+    opacity: 0.4;
+  }
+}
+@keyframes shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
 }

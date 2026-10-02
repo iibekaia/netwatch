@@ -1,0 +1,36 @@
+<div class="flex items-center justify-between gap-3">
+  <div>
+    <p class="text-[15px]">
+      <strong>{{ lan.devices().length }}</strong> მოწყობილობა ქსელში
+      @if (lan.peerCount()) {
+        · <strong class="text-ok">{{ lan.peerCount() }}</strong> NetWatch-ით
+      }
+    </p>
+    <p class="mt-0.5 flex flex-wrap gap-x-2.5 gap-y-1 text-xs text-muted">
+      @for (s of lan.state()?.subnets ?? []; track s.address) {
+        <span>{{ s.network }}/{{ prefix(s.netmask) }} · {{ s.iface }}</span>
+      }
+      @if (lan.state()?.scannedAt; as at) {
+        <span>განახლდა {{ at | date: 'HH:mm:ss' }}</span>
+      }
+    </p>
+  </div>
+  <button class="btn-ghost" (click)="lan.scan()" [disabled]="lan.scanning()">
+    {{ lan.scanning() ? 'სკანირება…' : 'სკანირება' }}
+  </button>
+</div>
+
+<ul class="flex flex-col gap-1.5">
+  @for (d of lan.devices(); track d.ip) {
+    <li><app-device-card [device]="d" /></li>
+  } @empty {
+    <li class="empty-state">
+      {{ lan.scanning() ? 'ქსელი სკანირდება…' : 'მოწყობილობები ვერ მოიძებნა' }}
+    </li>
+  }
+</ul>
+
+<p class="text-center text-[11px] text-muted">
+  მწვანედ მონიშნულია ის, ვისაც NetWatch აქვს გაშვებული. ზოგი მოწყობილობა (მაგ. ძილის
+  რეჟიმში მყოფი ტელეფონი) შეიძლება ყოველ სკანირებაზე არ ჩანდეს.
+</p>

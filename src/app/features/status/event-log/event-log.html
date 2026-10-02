@@ -1,0 +1,30 @@
+<div class="mb-2 flex items-center justify-between">
+  <h2 class="section-title">მოვლენების ისტორია</h2>
+  @if (events().length) {
+    <button class="btn-link" (click)="clear.emit()">გასუფთავება</button>
+  }
+</div>
+
+<ul class="flex flex-col gap-1.5 overflow-y-auto">
+  @for (e of events(); track e.id) {
+    <li
+      class="grid animate-slide-in grid-cols-[auto_auto_1fr] items-center gap-2.5 rounded-[10px] border border-border bg-card px-2.5 py-2 text-[13px]"
+    >
+      <span
+        class="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+        [class]="e.online ? 'bg-ok/18 text-ok' : 'bg-bad/18 text-bad'"
+      >
+        {{ e.online ? 'ჩაირთო' : 'გაითიშა' }}
+      </span>
+      <span class="tabular-nums">{{ e.at | date: 'HH:mm:ss' }}</span>
+      <span class="truncate text-muted">
+        {{ reasonText(e.reason) }}
+        @if (e.previousDuration !== null) {
+          · წინა მდგომარეობა {{ formatDuration(e.previousDuration) }}
+        }
+      </span>
+    </li>
+  } @empty {
+    <li class="empty-state">ჯერ ცვლილება არ ყოფილა. სცადე Wi-Fi-ის გათიშვა.</li>
+  }
+</ul>

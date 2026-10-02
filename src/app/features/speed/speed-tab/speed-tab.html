@@ -1,0 +1,54 @@
+@let live = speed.live();
+@let phase = speed.phase();
+
+<app-provider-card
+  [provider]="speed.provider()"
+  [loading]="speed.providerLoading()"
+  (refresh)="speed.refreshProvider()"
+/>
+
+<div class="card flex flex-col gap-4">
+  <div class="grid grid-cols-2 gap-2.5">
+    <div class="flex flex-col gap-0.5">
+      <span class="caption">Ping</span>
+      <span class="stat" [class.text-accent]="phase === 'ping'">{{ fmt(live.ping, 0) }}<small>ms</small></span>
+    </div>
+    <div class="flex flex-col gap-0.5">
+      <span class="caption">Jitter</span>
+      <span class="stat" [class.text-accent]="phase === 'ping'">{{ fmt(live.jitter, 0) }}<small>ms</small></span>
+    </div>
+  </div>
+
+  <app-speed-meter label="ჩამოტვირთვა" icon="↓" [value]="live.download" [active]="phase === 'download'" />
+  <app-speed-meter label="ატვირთვა" icon="↑" color="ok" [value]="live.upload" [active]="phase === 'upload'" />
+
+  @if (speed.running()) {
+    <div class="h-[3px] overflow-hidden rounded-full bg-muted/16" aria-hidden="true">
+      <span class="block h-full bg-accent transition-[width] duration-200 ease-linear" [style.width.%]="overallProgress()"></span>
+    </div>
+  }
+
+  @if (!speed.running() && live.download !== undefined) {
+    <p class="text-[13px]">{{ verdict() }}</p>
+  }
+  @if (speed.error(); as err) {
+    <p class="text-[13px] text-bad">{{ err }}</p>
+  }
+</div>
+
+@if (speed.running()) {
+  <button class="btn-danger" (click)="speed.cancel()">გაჩერება · {{ phaseLabel() }}</button>
+} @else {
+  <button class="btn-primary" (click)="speed.run()" [disabled]="conn.online() === false">
+    {{ speed.history().length ? 'თავიდან გაზომვა' : 'სიჩქარის გაზომვა' }}
+  </button>
+}
+
+@if (speed.history().length) {
+  <app-speed-history [results]="speed.history()" />
+}
+
+<p class="text-center text-[11px] text-muted">
+  ტესტი Cloudflare-ის უახლოეს სერვერთან ტარდება (დაახლ. 20 წამი). ერთი გაზომვა
+  ინტერნეტის სიჩქარის მიხედვით რამდენიმე ათეულიდან რამდენიმე ასეულ MB-მდე ხარჯავს.
+</p>

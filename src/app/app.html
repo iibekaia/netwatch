@@ -1,274 +1,37 @@
-<main class="shell">
-  <header class="top">
-    <div class="brand">
-      <span class="logo" aria-hidden="true"></span>
-      <h1>NetWatch</h1>
+<main class="mx-auto flex min-h-screen max-w-[560px] flex-col gap-4 px-5 pt-5 pb-3">
+  <header class="flex items-center justify-between">
+    <div class="flex items-center gap-2.5">
+      <span
+        class="size-[22px] rounded-md bg-[conic-gradient(from_200deg,var(--ok),var(--accent),var(--ok))]"
+        aria-hidden="true"
+      ></span>
+      <h1 class="text-lg font-bold tracking-wide">NetWatch</h1>
     </div>
     @if (conn.isElectron) {
-      <button class="ghost" (click)="conn.toggleDevTools()" title="F12 / Ctrl+Shift+I">
+      <button class="btn-ghost" (click)="conn.toggleDevTools()" title="F12 / Ctrl+Shift+I">
         Inspect
       </button>
     }
   </header>
 
+  <!-- ქსელი და სიჩქარე მხოლოდ Electron-შია (ბრაუზერში — მხოლოდ კავშირი) -->
   @if (lan.available) {
-    <nav class="tabs" role="tablist">
-      <button role="tab" [class.active]="tab() === 'status'" [attr.aria-selected]="tab() === 'status'"
-              (click)="tab.set('status')">
-        კავშირი
-      </button>
-      <button role="tab" [class.active]="tab() === 'lan'" [attr.aria-selected]="tab() === 'lan'"
-              (click)="tab.set('lan')">
-        ქსელი
-        <span class="count">{{ lan.devices().length }}</span>
-        @if (lan.peerCount()) {
-          <span class="count peer">{{ lan.peerCount() }} NetWatch</span>
-        }
-      </button>
-      <button role="tab" [class.active]="tab() === 'speed'" [attr.aria-selected]="tab() === 'speed'"
-              (click)="tab.set('speed')">
-        სიჩქარე
-        @if (speed.running()) {
-          <span class="count live">…</span>
-        }
-      </button>
-    </nav>
+    <app-tab-nav [(active)]="tab" />
   }
 
-  @if (tab() === 'status') {
-    <section class="status" [class]="stateClass()" aria-live="polite">
-      <div class="pulse" aria-hidden="true">
-        <span class="dot"></span>
-      </div>
-      <p class="state">{{ stateLabel() }}</p>
-      <p class="sub">{{ reasonLabel() }}</p>
-      <p class="duration">
-        {{ conn.online() === false ? 'გათიშულია' : 'ჩართულია' }} უკვე
-        <strong>{{ duration() }}</strong>
-      </p>
-    </section>
-
-    <section class="metrics">
-      <div class="metric">
-        <span class="label">დაყოვნება</span>
-        <span class="value">
-          {{ conn.status().latencyMs !== null ? conn.status().latencyMs + ' ms' : '—' }}
-        </span>
-      </div>
-      <div class="metric">
-        <span class="label">ბოლო შემოწმება</span>
-        <span class="value">
-          {{ conn.status().lastCheck ? (conn.status().lastCheck | date: 'HH:mm:ss') : '—' }}
-        </span>
-      </div>
-      <div class="metric">
-        <span class="label">ცვლილებები</span>
-        <span class="value">{{ conn.events().length }}</span>
-      </div>
-    </section>
-
-    <div class="actions">
-      <button class="primary" (click)="conn.checkNow()" [disabled]="conn.checking()">
-        {{ conn.checking() ? 'მოწმდება…' : 'შეამოწმე ახლავე' }}
-      </button>
-    </div>
-
-    <section class="log">
-      <div class="log-head">
-        <h2>მოვლენების ისტორია</h2>
-        @if (conn.events().length) {
-          <button class="link" (click)="conn.clearLog()">გასუფთავება</button>
-        }
-      </div>
-
-      <ul>
-        @for (e of conn.events(); track e.id) {
-          <li [class.on]="e.online" [class.off]="!e.online">
-            <span class="badge">{{ e.online ? 'ჩაირთო' : 'გაითიშა' }}</span>
-            <span class="time">{{ e.at | date: 'HH:mm:ss' }}</span>
-            <span class="meta">
-              {{ reasonText(e.reason) }}
-              @if (e.previousDuration !== null) {
-                · წინა მდგომარეობა {{ formatDuration(e.previousDuration) }}
-              }
-            </span>
-          </li>
-        } @empty {
-          <li class="empty">ჯერ ცვლილება არ ყოფილა. სცადე Wi-Fi-ის გათიშვა.</li>
-        }
-      </ul>
-    </section>
-  } @else if (tab() === 'lan') {
-    <section class="lan">
-      <div class="lan-summary">
-        <div>
-          <p class="lan-count">
-            <strong>{{ lan.devices().length }}</strong> მოწყობილობა ქსელში
-            @if (lan.peerCount()) {
-              · <strong class="peer-text">{{ lan.peerCount() }}</strong> NetWatch-ით
-            }
-          </p>
-          <p class="lan-meta">
-            @for (s of lan.state()?.subnets ?? []; track s.address) {
-              <span>{{ s.network }}/{{ prefix(s.netmask) }} · {{ s.iface }}</span>
-            }
-            @if (lan.state()?.scannedAt; as at) {
-              <span>განახლდა {{ at | date: 'HH:mm:ss' }}</span>
-            }
-          </p>
-        </div>
-        <button class="ghost" (click)="lan.scan()" [disabled]="lan.scanning()">
-          {{ lan.scanning() ? 'სკანირება…' : 'სკანირება' }}
-        </button>
-      </div>
-
-      <ul class="devices">
-        @for (d of lan.devices(); track d.ip) {
-          <li class="device" [class.peer]="d.peer" [class.self]="d.self" [class.gw]="d.gateway">
-            <span class="kind" aria-hidden="true">{{ kindIcon(d) }}</span>
-            <div class="info">
-              <div class="name">
-                <span class="title">{{ deviceName(d) }}</span>
-                @if (d.self) {
-                  <span class="tag self">ეს კომპიუტერი</span>
-                }
-                @if (d.gateway) {
-                  <span class="tag gw">როუტერი</span>
-                }
-                @if (d.peer) {
-                  <span class="tag peer">NetWatch {{ d.peer.version }}</span>
-                }
-              </div>
-              @if (d.peer) {
-                <div class="line">👤 {{ d.peer.user }} · {{ d.peer.host }} · {{ platformName(d.peer.platform) }}</div>
-              }
-              <div class="line mono">
-                {{ d.ip }}
-                @if (d.mac) {
-                  · {{ d.mac }}
-                }
-              </div>
-              @if (extraInfo(d); as extra) {
-                <div class="line">{{ extra }}</div>
-              }
-            </div>
-          </li>
-        } @empty {
-          <li class="empty">
-            {{ lan.scanning() ? 'ქსელი სკანირდება…' : 'მოწყობილობები ვერ მოიძებნა' }}
-          </li>
-        }
-      </ul>
-
-      <p class="hint">
-        მწვანედ მონიშნულია ის, ვისაც NetWatch აქვს გაშვებული. ზოგი მოწყობილობა (მაგ. ძილის
-        რეჟიმში მყოფი ტელეფონი) შეიძლება ყოველ სკანირებაზე არ ჩანდეს.
-      </p>
-    </section>
-  } @else {
-    <section class="speed">
-      <div class="isp card">
-        <div class="isp-head">
-          <div class="isp-name">
-            <span class="label">პროვაიდერი</span>
-            <strong>{{ speed.provider()?.isp ?? (speed.providerLoading() ? 'იტვირთება…' : '—') }}</strong>
-            @if (speed.provider()?.network; as network) {
-              <span class="line">{{ network }}</span>
-            }
-          </div>
-          <button class="link" (click)="speed.refreshProvider()" [disabled]="speed.providerLoading()">
-            განახლება
-          </button>
-        </div>
-        @if (speed.provider(); as p) {
-          <dl class="isp-grid">
-            <div><dt>საჯარო IP</dt><dd class="mono">{{ p.ip ?? '—' }}</dd></div>
-            <div><dt>ASN</dt><dd class="mono">{{ p.asn ?? '—' }}</dd></div>
-            <div><dt>მდებარეობა</dt><dd>{{ location(p) }}</dd></div>
-            <div><dt>ტესტის სერვერი</dt><dd>{{ p.server ?? '—' }}</dd></div>
-          </dl>
-        }
-      </div>
-
-      <div class="gauges card">
-        <div class="ping-row">
-          <div class="ping" [class.active]="speed.phase() === 'ping'">
-            <span class="label">Ping</span>
-            <span class="big">{{ fmt(speed.live().ping, 0) }}<small>ms</small></span>
-          </div>
-          <div class="ping" [class.active]="speed.phase() === 'ping'">
-            <span class="label">Jitter</span>
-            <span class="big">{{ fmt(speed.live().jitter, 0) }}<small>ms</small></span>
-          </div>
-        </div>
-
-        @for (g of gauges; track g.key) {
-          <div class="gauge" [class]="g.key" [class.active]="speed.phase() === g.key">
-            <div class="gauge-head">
-              <span class="label">{{ g.icon }} {{ g.label }}</span>
-              <span class="big">{{ fmt(speed.live()[g.key], 1) }}<small>Mbps</small></span>
-            </div>
-            <div class="bar" role="meter" [attr.aria-label]="g.label"
-                 aria-valuemin="0" aria-valuemax="1000" [attr.aria-valuenow]="speed.live()[g.key] ?? 0">
-              <span class="fill" [style.width.%]="barPct(speed.live()[g.key])"></span>
-            </div>
-            <div class="scale" aria-hidden="true">
-              <span>0</span><span>10</span><span>100</span><span>1000</span>
-            </div>
-          </div>
-        }
-
-        @if (speed.running()) {
-          <div class="phase-progress" aria-hidden="true">
-            <span [style.width.%]="overallProgress()"></span>
-          </div>
-        }
-
-        @if (!speed.running() && speed.live().download !== undefined) {
-          <p class="verdict">{{ verdict() }}</p>
-        }
-        @if (speed.error(); as err) {
-          <p class="verdict bad">{{ err }}</p>
-        }
-      </div>
-
-      @if (speed.running()) {
-        <button class="primary danger" (click)="speed.cancel()">გაჩერება · {{ phaseLabel() }}</button>
-      } @else {
-        <button class="primary" (click)="speed.run()" [disabled]="conn.online() === false">
-          {{ speed.history().length ? 'თავიდან გაზომვა' : 'სიჩქარის გაზომვა' }}
-        </button>
-      }
-
-      @if (speed.history().length) {
-        <div class="history">
-          <h2>წინა გაზომვები</h2>
-          <table>
-            <thead>
-              <tr><th>დრო</th><th>↓ Mbps</th><th>↑ Mbps</th><th>Ping</th></tr>
-            </thead>
-            <tbody>
-              @for (r of speed.history(); track r.at) {
-                <tr>
-                  <td>{{ r.at | date: 'dd.MM HH:mm' }}</td>
-                  <td>{{ r.download }}</td>
-                  <td>{{ r.upload }}</td>
-                  <td>{{ r.ping }} ms</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
-
-      <p class="hint">
-        ტესტი Cloudflare-ის უახლოეს სერვერთან ტარდება (დაახლ. 20 წამი). ერთი გაზომვა
-        ინტერნეტის სიჩქარის მიხედვით რამდენიმე ათეულიდან რამდენიმე ასეულ MB-მდე ხარჯავს.
-      </p>
-    </section>
+  @switch (tab()) {
+    @case ('lan') {
+      <app-lan-tab />
+    }
+    @case ('speed') {
+      <app-speed-tab />
+    }
+    @default {
+      <app-status-tab />
+    }
   }
 
-  <footer>
+  <footer class="text-center text-[11px] text-muted">
     @if (versions) {
       Electron {{ versions.electron }} · Chrome {{ versions.chrome }} · Node {{ versions.node }}
     } @else {
@@ -277,10 +40,4 @@
   </footer>
 </main>
 
-<div class="toasts">
-  @for (t of toasts(); track t.id) {
-    <div class="toast" [class.on]="t.online" [class.off]="!t.online" (click)="dismiss(t.id)">
-      {{ t.text }}
-    </div>
-  }
-</div>
+<app-toasts />

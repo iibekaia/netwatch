@@ -1,0 +1,25 @@
+@for (t of tabs; track t.id) {
+  <button
+    role="tab"
+    class="flex items-center justify-center gap-1.5 rounded-[10px] p-2 text-sm font-semibold transition"
+    [class]="active() === t.id ? 'bg-accent/14 text-accent' : 'text-muted hover:text-text'"
+    [attr.aria-selected]="active() === t.id"
+    (click)="active.set(t.id)"
+  >
+    {{ t.label }}
+
+    @switch (t.id) {
+      @case ('lan') {
+        <span class="badge bg-muted/18 text-muted">{{ lan.devices().length }}</span>
+        @if (lan.peerCount()) {
+          <span class="badge bg-ok/18 text-ok">{{ lan.peerCount() }} NetWatch</span>
+        }
+      }
+      @case ('speed') {
+        @if (speed.running()) {
+          <span class="badge animate-blink-text bg-accent/18 text-accent">…</span>
+        }
+      }
+    }
+  </button>
+}
