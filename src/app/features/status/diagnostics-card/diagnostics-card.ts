@@ -30,7 +30,7 @@ const VERDICT_TONE = {
 const TRIGGERS: Record<string, string> = {
   offline: 'ავტომატურად, გათიშვისას',
   online: 'ავტომატურად, აღდგენისას',
-  manual: 'ხელით',
+  manual: '', // ხელით ან ტაბის გახსნისას — მხოლოდ დრო
 };
 
 /**
@@ -70,4 +70,9 @@ export class DiagnosticsCard {
   );
 
   protected readonly triggerLabel = computed(() => TRIGGERS[this.diag.state().trigger ?? ''] ?? '');
+
+  constructor() {
+    // ტაბის გახსნისას ჯაჭვი ცარიელი რომ არ იყოს — ჯერ თუ არ შემოწმებულა, ახლავე (< 1 წამი)
+    if (this.diag.available && !this.diag.state().result && !this.diag.state().running) this.diag.run();
+  }
 }

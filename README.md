@@ -201,7 +201,7 @@ src/
       toasts/             შეტყობინებების ჩვენება
       update-banner/      ახალი ვერსიის ბანერი
     features/
-      status/   status-tab, event-log, diagnostics-card
+      status/   status-tab, diagnostics-card
       lan/      lan-tab, device-card
       speed/    speed-tab, provider-card, speed-meter, speed-history
       history/  history-tab, downtime-chart, outage-list

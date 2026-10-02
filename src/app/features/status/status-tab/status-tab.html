@@ -1,42 +1,21 @@
-<section class="card px-6 pt-8 pb-7 text-center transition-colors duration-300" [class]="tone().card" aria-live="polite">
-  <!-- ინდიკატორი: ონლაინ — რბილი ტალღა, ოფლაინ / მოწმდება — უძრავი -->
-  <div class="mx-auto mb-5 grid size-16 place-items-center rounded-full" [class]="tone().halo" aria-hidden="true">
-    <span class="relative flex size-4">
-      @if (conn.online() !== null) {
-        <span class="absolute inset-0 animate-ping-soft rounded-full opacity-60" [class]="tone().dot"></span>
+@let s = conn.status();
+
+<!-- მოკლე მდგომარეობა: რამდენ ხანს, დაყოვნება, ბოლო შემოწმება -->
+<section class="card" [class]="conn.online() === false ? 'border-bad/25! bg-bad/5!' : ''">
+  <div class="min-w-0">
+    <p class="truncate text-[15px] font-semibold tracking-tight" [class.text-bad]="conn.online() === false">
+      {{ title() }}
+    </p>
+    <p class="mt-0.5 truncate text-xs text-muted">
+      {{ reason() }}
+      @if (s.latencyMs !== null) {
+        · <span class="tabular-nums">{{ s.latencyMs }} ms</span>
       }
-      <span class="relative size-4 rounded-full transition-colors duration-300" [class]="tone().dot"></span>
-    </span>
+      @if (s.lastCheck) {
+        · შემოწმდა <span class="tabular-nums">{{ s.lastCheck | date: 'HH:mm:ss' }}</span>
+      }
+    </p>
   </div>
-
-  <p class="text-[34px] leading-none font-semibold tracking-tight" [class]="tone().text">{{ stateLabel() }}</p>
-  <p class="mt-2.5 text-sm text-muted">{{ reasonLabel() }}</p>
-  <p class="mt-1 text-sm text-muted">
-    {{ conn.online() === false ? 'გათიშულია' : 'ჩართულია' }}
-    <span class="font-medium text-text tabular-nums">{{ duration() }}</span>
-  </p>
 </section>
 
-<!-- ოფლაინ — დიაგნოსტიკა ზემოთ, ყველაზე საჭირო ადგილას -->
-@if (conn.online() === false) {
-  <app-diagnostics-card />
-}
-
-<section class="card grid grid-cols-3 divide-x divide-border p-0">
-  @for (m of metrics(); track m.label) {
-    <div class="flex min-w-0 flex-col gap-1 px-4 py-3.5">
-      <span class="caption truncate">{{ m.label }}</span>
-      <span class="text-[17px] font-semibold tracking-tight tabular-nums">{{ m.value }}</span>
-    </div>
-  }
-</section>
-
-<button class="btn-primary" (click)="conn.checkNow()" [disabled]="conn.checking()">
-  {{ conn.checking() ? 'მოწმდება…' : 'შეამოწმე ახლავე' }}
-</button>
-
-@if (conn.online() !== false) {
-  <app-diagnostics-card />
-}
-
-<app-event-log class="mt-2 flex min-h-0 flex-1 flex-col" [events]="conn.events()" (clear)="conn.clearLog()" />
+<app-diagnostics-card />

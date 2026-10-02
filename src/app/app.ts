@@ -26,7 +26,8 @@ export class App {
   protected readonly lan = inject(LanService);
   protected readonly update = inject(UpdateService);
   protected readonly autostart = inject(AutostartService);
-  protected readonly tab = signal<AppTab>('status');
+  // სიჩქარე — პირველი ტაბი; ბრაუზერის რეჟიმში (Electron-ის გარეშე) მხოლოდ კავშირი მუშაობს
+  protected readonly tab = signal<AppTab>(window.netwatch ? 'speed' : 'status');
   protected readonly versions = window.netwatch?.versions;
 
   /** header-ის პატარა ინდიკატორი */
@@ -36,7 +37,7 @@ export class App {
   });
   protected readonly statusDot = computed(() => {
     const online = this.conn.online();
-    return online === null ? 'bg-muted' : online ? 'bg-ok' : 'bg-bad';
+    return online === null ? 'bg-muted' : online ? 'bg-ok' : 'bg-white';
   });
 
   private readonly toast = inject(ToastService);
