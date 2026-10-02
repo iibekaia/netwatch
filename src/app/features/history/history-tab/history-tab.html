@@ -1,0 +1,87 @@
+@let s = summary();
+
+<!-- პერიოდი -->
+<div class="grid grid-cols-4 gap-1 rounded-xl bg-subtle p-1" role="radiogroup" aria-label="პერიოდი">
+  @for (p of periods; track p[0]) {
+    @let selected = history.period() === p[0];
+    <button
+      role="radio"
+      class="h-8 rounded-lg text-[12.5px] font-medium transition"
+      [class]="selected ? 'bg-raised text-text shadow-soft' : 'text-muted hover:text-text'"
+      [attr.aria-checked]="selected"
+      (click)="history.setPeriod(p[0])"
+    >
+      {{ p[1] }}
+    </button>
+  }
+</div>
+
+@if (s) {
+  <section class="card flex flex-col gap-4 p-5">
+    <p class="text-[14px] leading-relaxed">{{ sentence() }}</p>
+
+    <div class="grid grid-cols-2 gap-x-4 gap-y-5">
+      <div class="flex flex-col gap-2">
+        <span class="caption flex items-center gap-1.5">
+          <span class="size-1.5 rounded-full" [class]="uptimeTone()"></span>
+          Uptime
+        </span>
+        <span class="stat">{{ uptime() }}</span>
+      </div>
+      <div class="flex flex-col gap-2">
+        <span class="caption">გათიშვები</span>
+        <span class="stat">
+          {{ s.count }}
+          @if (s.providerCount) {
+            <small>{{ s.providerCount }} პროვაიდერის მხარეს</small>
+          }
+        </span>
+      </div>
+      <div class="flex flex-col gap-2">
+        <span class="caption">ჯამში ოფლაინ</span>
+        <span class="text-lg font-semibold tracking-tight tabular-nums">{{ s.downtimeMs ? formatDuration(s.downtimeMs) : '—' }}</span>
+      </div>
+      <div class="flex flex-col gap-2">
+        <span class="caption">ყველაზე ხანგრძლივი</span>
+        <span class="text-lg font-semibold tracking-tight tabular-nums">
+          {{ s.longestMs ? formatDuration(s.longestMs) : '—' }}
+          @if (s.longestAt) {
+            <small class="ml-1 text-xs font-normal text-muted">{{ s.longestAt | date: 'd MMM' }}</small>
+          }
+        </span>
+      </div>
+    </div>
+
+    @if ((history.report()?.days?.length ?? 0) > 1) {
+      <div class="border-t border-border pt-4">
+        <p class="caption mb-3">ოფლაინ დრო დღეების მიხედვით</p>
+        <app-downtime-chart [days]="history.report()!.days" />
+      </div>
+    }
+
+    <p class="text-[11px] text-muted/80">
+      მონიტორინგი: {{ formatDuration(s.monitoredMs) }} — კომპიუტრის გამორთვის და ძილის დრო არ ითვლება.
+    </p>
+  </section>
+
+  <!-- ექსპორტი — პროვაიდერთან საჩივრისთვის -->
+  <div class="grid grid-cols-2 gap-2">
+    <button class="btn-soft h-10 justify-center" (click)="export('pdf')" [disabled]="history.exporting()">
+      <app-icon name="file-text" class="size-4" />
+      {{ history.exporting() === 'pdf' ? 'იქმნება…' : 'PDF ანგარიში' }}
+    </button>
+    <button class="btn-soft h-10 justify-center" (click)="export('csv')" [disabled]="history.exporting()">
+      <app-icon name="table" class="size-4" />
+      {{ history.exporting() === 'csv' ? 'იქმნება…' : 'CSV (Excel)' }}
+    </button>
+  </div>
+
+  <div class="mt-2 flex items-center justify-between px-1">
+    <h2 class="section-title">გათიშვები</h2>
+    <button class="btn-link flex items-center gap-1" (click)="clear()">
+      <app-icon name="trash" class="size-3.5" />
+      ისტორიის წაშლა
+    </button>
+  </div>
+  <app-outage-list [outages]="history.report()!.outages" />
+}

@@ -1,0 +1,68 @@
+<div class="relative pl-9" (mouseleave)="hovered.set(null)">
+  <!-- y ღერძი: მხოლოდ 0 და მაქსიმუმი, რბილი ხაზებით -->
+  <span class="absolute top-0 left-0 w-8 text-right text-[10px] text-muted tabular-nums">{{ axisLabel(maxMin()) }}</span>
+  <span class="absolute bottom-5 left-0 w-8 text-right text-[10px] leading-none text-muted">0</span>
+
+  <div class="relative h-32">
+    <span class="absolute inset-x-0 top-1.5 border-t border-dashed border-border"></span>
+    <span class="absolute inset-x-0 bottom-0 border-t border-border"></span>
+
+    <div class="absolute inset-0 top-1.5 flex items-end gap-0.5">
+      @for (b of bars(); track b.date) {
+        <!-- hit-area: სვეტის მთელი სიმაღლე, არა მხოლოდ მონიშნული ნაწილი -->
+        <button
+          type="button"
+          class="relative flex h-full min-w-0 flex-1 cursor-default items-end"
+          [attr.aria-label]="(b.date | date: 'd MMM') + ': ' + formatDuration(b.downtimeMs)"
+          (mouseenter)="hovered.set(b.i)"
+          (focus)="hovered.set(b.i)"
+          (blur)="hovered.set(null)"
+        >
+          @if (b.downtimeMs > 0) {
+            <span
+              class="block w-full rounded-t-[4px] bg-mark-bad transition-opacity"
+              [class.opacity-60]="hovered() !== null && hovered() !== b.i"
+              [style.height.%]="b.pct"
+              [style.min-height.px]="3"
+            ></span>
+          } @else {
+            <!-- გათიშვა არ ყოფილა — პატარა ნიშანი ბაზაზე; მონაცემი თუ არ არის — უფრო ღია -->
+            <span class="block h-0.5 w-full rounded-full" [class]="b.noData ? 'bg-border/50' : 'bg-border'"></span>
+          }
+        </button>
+      }
+    </div>
+
+    @if (tip(); as t) {
+      <div
+        class="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-text px-2.5 py-1.5 text-[11px] whitespace-nowrap text-bg shadow-lg"
+        [style.left.%]="((t.i + 0.5) / bars().length) * 100"
+      >
+        <div class="font-medium">{{ t.date | date: 'd MMM, EEE' }}</div>
+        @if (t.noData) {
+          <div class="opacity-70">NetWatch არ მუშაობდა</div>
+        } @else if (t.downtimeMs > 0) {
+          <div>ოფლაინ {{ formatDuration(t.downtimeMs) }} · {{ t.count }}-ჯერ</div>
+        } @else {
+          <div class="opacity-70">გათიშვა არ ყოფილა</div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- x ღერძი: პირველი, შუა და ბოლო დღე -->
+  <div class="relative mt-1.5 h-3.5 text-[10px] text-muted">
+    @for (b of bars(); track b.date) {
+      @if (b.label) {
+        <span
+          class="absolute -translate-x-1/2 whitespace-nowrap"
+          [class.translate-x-0!]="b.i === 0"
+          [class.-translate-x-full!]="b.i === bars().length - 1 && b.i !== 0"
+          [style.left.%]="b.i === 0 ? 0 : b.i === bars().length - 1 ? 100 : ((b.i + 0.5) / bars().length) * 100"
+        >
+          {{ b.date | date: 'd MMM' }}
+        </span>
+      }
+    }
+  </div>
+</div>

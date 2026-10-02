@@ -87,6 +87,48 @@ export interface SpeedResult {
 
 export type SpeedRunResponse = { ok: true; result: SpeedResult } | { ok: false; error: string };
 
+/** შენახული გათიშვა (electron/history-store.js) */
+export interface Outage {
+  start: number;
+  end: number;
+  durationMs: number;
+  /** ჯერ გრძელდება */
+  ongoing: boolean;
+  reason: string;
+  /** დიაგნოსტიკის დასკვნა, მაგ. "პრობლემა პროვაიდერის მხარესაა" */
+  cause: string | null;
+  failedAt: DiagStepId | null;
+  /** აპი დაიხურა გათიშვის დროს — დასასრული მიახლოებითია */
+  unknownEnd: boolean;
+}
+
+export interface HistoryReport {
+  summary: {
+    from: number;
+    to: number;
+    /** როცა NetWatch მუშაობდა */
+    monitoredMs: number;
+    downtimeMs: number;
+    uptimePct: number | null;
+    count: number;
+    longestMs: number;
+    longestAt: number | null;
+    avgMs: number;
+    /** გათიშვები პროვაიდერის მხარეს (როუტერი მუშაობდა) */
+    providerCount: number;
+    ongoing: boolean;
+  };
+  days: { date: number; downtimeMs: number; count: number; monitoredMs: number }[];
+  outages: Outage[];
+}
+
+export interface HistoryRange {
+  from: number;
+  to: number;
+}
+
+export type ExportResult = { ok: true; path: string } | { ok: false; canceled?: boolean; error?: string };
+
 /** კავშირის ჯაჭვის რგოლი: კომპიუტერი → როუტერი → ინტერნეტი → DNS → ვები */
 export type DiagStepId = 'adapter' | 'router' | 'internet' | 'dns' | 'web';
 
@@ -154,6 +196,10 @@ export interface NetwatchApi {
   runSpeedTest(): Promise<SpeedRunResponse>;
   cancelSpeedTest(): void;
   onSpeedProgress(cb: (p: SpeedProgress) => void): () => void;
+  queryHistory(range: HistoryRange): Promise<HistoryReport>;
+  exportHistory(opts: HistoryRange & { format: 'csv' | 'pdf'; periodLabel: string }): Promise<ExportResult>;
+  clearHistory(): Promise<void>;
+  onHistory(cb: () => void): () => void;
   getDiagnostics(): Promise<DiagState>;
   runDiagnostics(): Promise<DiagState>;
   onDiagnostics(cb: (s: DiagState) => void): () => void;

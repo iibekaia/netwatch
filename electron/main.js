@@ -1,11 +1,16 @@
 const path = require('path');
-const { app, BrowserWindow, ipcMain, Menu, Notification, powerMonitor } = require('electron');
+const fs = require('fs');
+const os = require('os');
+const { app, BrowserWindow, dialog, ipcMain, Menu, Notification, powerMonitor, shell } = require('electron');
 const { ConnectionMonitor } = require('./connection-monitor');
 const lanScanner = require('./lan-scanner');
 const { PeerDiscovery } = require('./peer-discovery');
 const { SpeedTest, providerInfo } = require('./speed-test');
 const { Updater } = require('./updater');
 const { runDiagnostics } = require('./diagnostics');
+const { HistoryStore } = require('./history-store');
+const { queryHistory } = require('./history-stats');
+const historyExport = require('./history-export');
 
 // --dev: Angular იტვირთება ng serve-დან (http://localhost:4200), DevTools ავტომატურად იხსნება
 const isDev = process.argv.includes('--dev');
@@ -21,6 +26,12 @@ updater.on('state', (state) => {
 });
 let win = null;
 
+// გათიშვების ისტორია დისკზე: %APPDATA%NetWatchhistory.json
+const history = new HistoryStore(path.join(app.getPath('userData'), 'history.json'));
+history.on('change', () => {
+  if (win && !win.isDestroyed()) win.webContents.send('history:update');
+});
+
 // ─────────────────────────────────────────────
 //  ჰენდლერები — აქ წერ, რა მოხდეს გათიშვის/ჩართვისას
 // ─────────────────────────────────────────────
@@ -28,12 +39,14 @@ let win = null;
 function handleOffline(status, prev) {
   console.log(`[netwatch] ❌ ინტერნეტი გაითიშა (${status.reason})`);
   win?.flashFrame(true);
+  history.startOutage(status.since, status.reason);
 
   // დიაგნოსტიკა ავტომატურად — შეტყობინებაში უკვე მიზეზი ეწერება ("როუტერი არ პასუხობს" …)
   diagnose('offline').then((result) => {
+    const v = result?.verdict;
+    history.annotate(v); // მიზეზი ისტორიაშიც — საჩივრისთვის
     // პირველ შემოწმებაზე (როცა წინა მდგომარეობა უცნობია) შეტყობინებას არ ვაჩვენებთ
     if (prev.online === null) return;
-    const v = result?.verdict;
     if (v && v.level !== 'ok') notify(`ინტერნეტი გაითიშა — ${v.title}`, v.advice);
     else notify('ინტერნეტი გაითიშა', 'კავშირი დაიკარგა. ველოდები აღდგენას…');
   });
@@ -46,6 +59,7 @@ function handleOnline(status, prev) {
     notify('ინტერნეტი აღდგა', `კავშირი არ იყო ${downFor} წამი.`);
   }
   win?.flashFrame(false);
+  history.endOutage(status.since);
   peers.announce();
   scanLan();
   loadProvider();
@@ -201,6 +215,9 @@ ipcMain.handle('speed:run', async () => {
 });
 ipcMain.on('speed:cancel', () => speedTest.cancel());
 ipcMain.handle('diag:get', () => diag);
+ipcMain.handle('history:query', (_e, range) => queryHistory(history.snapshot(), range));
+ipcMain.handle('history:clear', () => history.clear());
+ipcMain.handle('history:export', (_e, opts) => exportHistory(opts));
 ipcMain.handle('diag:run', async () => {
   await diagnose('manual');
   return diag;
@@ -296,6 +313,7 @@ function buildMenu() {
 if (process.platform === 'win32') app.setAppUserModelId('com.iibekaia.netwatch');
 
 app.whenReady().then(() => {
+  history.start(); // მონიტორამდე — რომ საწყისი "ოფლაინ"-იც ჩაიწეროს
   buildMenu();
   createWindow();
   monitor.start();
@@ -322,6 +340,46 @@ app.on('window-all-closed', () => {
   peers.stop();
   speedTest.cancel();
   updater.stop();
+  stopHistory();
   clearTimeout(lanTimer);
   if (process.platform !== 'darwin') app.quit();
 });
+
+// განახლების დაყენებისას (quitAndInstall) და macOS-ზე Cmd+Q-ით გასვლისას
+app.on('will-quit', stopHistory);
+
+let historyStopped = false;
+function stopHistory() {
+  if (historyStopped) return;
+  historyStopped = true;
+  history.stop();
+}
+
+// ─────────────────────────────────────────────
+//  ისტორიის ექსპორტი — CSV / PDF
+// ─────────────────────────────────────────────
+
+async function exportHistory({ format, from, to, periodLabel }) {
+  const report = queryHistory(history.snapshot(), { from, to });
+  const stamp = historyExport.dateTime(Date.now()).slice(0, 10);
+  const { canceled, filePath } = await dialog.showSaveDialog(win, {
+    title: format === 'pdf' ? 'ანგარიშის შენახვა (PDF)' : 'ისტორიის შენახვა (CSV)',
+    defaultPath: path.join(app.getPath('documents'), `netwatch-${format === 'pdf' ? 'report' : 'outages'}-${stamp}.${format}`),
+    filters: [format === 'pdf' ? { name: 'PDF', extensions: ['pdf'] } : { name: 'CSV', extensions: ['csv'] }],
+  });
+  if (canceled || !filePath) return { ok: false, canceled: true };
+
+  try {
+    if (format === 'pdf') {
+      const meta = { isp: provider?.isp, ip: provider?.ip, host: os.hostname(), periodLabel };
+      fs.writeFileSync(filePath, await historyExport.toPdf(report, meta));
+    } else {
+      fs.writeFileSync(filePath, historyExport.toCsv(report), 'utf8');
+    }
+    shell.showItemInFolder(filePath);
+    return { ok: true, path: filePath };
+  } catch (err) {
+    console.warn('[history] export failed', err);
+    return { ok: false, error: String(err?.message ?? err) };
+  }
+}

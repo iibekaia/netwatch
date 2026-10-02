@@ -54,6 +54,8 @@
   --color-ok: var(--ok);
   --color-bad: var(--bad);
   --color-warn: var(--warn);
+  /* გრაფიკის სვეტები (ოფლაინ დრო) — ორივე თემაში დადასტურებული: dataviz validate_palette */
+  --color-mark-bad: #ef4444;
 
   /* Noto Sans Georgian (ცვლადი, წონა 100–900) აპშია ჩაშენებული — angular.json → styles,
      ამიტომ ინტერნეტის გარეშეც იტვირთება */

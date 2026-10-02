@@ -1,14 +1,14 @@
 /** ფორმატირების საერთო ფუნქციები (რამდენიმე კომპონენტი იყენებს) */
 
-/** ms → "1სთ 2წთ 3წმ" */
+/** ms → "1სთ 2წთ" / "5წთ 3წმ" / "5წთ" / "40წმ" (საათებთან წამები აღარ ჩანს, ნულები — არც) */
 export function formatDuration(ms: number | null): string {
   if (ms === null || ms < 0) return '—';
   const total = Math.floor(ms / 1000);
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
-  if (h) return `${h}სთ ${m}წთ ${s}წმ`;
-  if (m) return `${m}წთ ${s}წმ`;
+  if (h) return m ? `${h}სთ ${m}წთ` : `${h}სთ`;
+  if (m) return s ? `${m}წთ ${s}წმ` : `${m}წთ`;
   return `${s}წმ`;
 }
 

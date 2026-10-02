@@ -11,11 +11,12 @@ import { UpdateBanner } from './layout/update-banner/update-banner';
 import { StatusTab } from './features/status/status-tab/status-tab';
 import { LanTab } from './features/lan/lan-tab/lan-tab';
 import { SpeedTab } from './features/speed/speed-tab/speed-tab';
+import { HistoryTab } from './features/history/history-tab/history-tab';
 
 /** აპის ჩარჩო: header, ტაბები, აქტიური ტაბის შიგთავსი, footer, toast-ები */
 @Component({
   selector: 'app-root',
-  imports: [Icon, TabNav, Toasts, UpdateBanner, StatusTab, LanTab, SpeedTab],
+  imports: [Icon, TabNav, Toasts, UpdateBanner, StatusTab, LanTab, SpeedTab, HistoryTab],
   templateUrl: './app.html',
   host: { class: 'block min-h-screen' },
 })
