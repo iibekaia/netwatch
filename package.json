@@ -7,7 +7,8 @@
     "dev": "concurrently -k -n ng,electron -c magenta,cyan \"ng serve --port 4200\" \"wait-on tcp:127.0.0.1:4200 && electron . --dev\"",
     "electron": "electron .",
     "build": "ng build",
-    "test": "ng test"
+    "test": "ng test",
+    "dist": "ng build && electron-builder --win"
   },
   "prettier": {
     "printWidth": 100,
@@ -39,6 +40,7 @@
     "@types/jasmine": "~5.1.0",
     "concurrently": "^10.0.5",
     "electron": "^38.8.6",
+    "electron-builder": "^26.15.3",
     "jasmine-core": "~5.9.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
@@ -49,5 +51,47 @@
     "wait-on": "^9.5.1"
   },
   "description": "Electron + Angular — ინტერნეტ-კავშირის ლაივ მონიტორი",
-  "main": "electron/main.js"
+  "main": "electron/main.js",
+  "author": "iibekaia",
+  "build": {
+    "appId": "com.iibekaia.netwatch",
+    "productName": "NetWatch",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "dist/netwatch/browser/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "NetWatch",
+      "artifactName": "NetWatch-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "NetWatch-Portable-${version}.${ext}"
+    },
+    "publish": null
+  }
 }

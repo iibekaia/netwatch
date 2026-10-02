@@ -138,6 +138,9 @@ function buildMenu() {
   );
 }
 
+// Windows-ზე შეტყობინებები სწორად რომ გამოჩნდეს დაინსტალირებულ აპში
+if (process.platform === 'win32') app.setAppUserModelId('com.iibekaia.netwatch');
+
 app.whenReady().then(() => {
   buildMenu();
   createWindow();

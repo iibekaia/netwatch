@@ -10,6 +10,26 @@ npm start      # Angular-ის build + Electron
 npm run dev    # ng serve + Electron, ცვლილებები ცოცხლად ჩანს, DevTools ავტომატურად იხსნება
 ```
 
+## Windows-ის exe (ინსტალერი)
+
+**გადმოწერა:** GitHub → [Releases](https://github.com/iibekaia/netwatch/releases) → ბოლო ვერსია:
+
+- `NetWatch-Setup-x.y.z.exe` — ინსტალერი (Start მენიუ + Desktop shortcut, Uninstall)
+- `NetWatch-Portable-x.y.z.exe` — ინსტალაციის გარეშე, პირდაპირ ეშვება
+
+exe ხელმოწერილი არ არის, ამიტომ Windows SmartScreen გააფრთხილებს: **More info → Run anyway**.
+
+**ახალი ვერსიის გამოშვება:** `package.json`-ში ვერსიას ცვლი და თეგს აგზავნი:
+
+```bash
+npm version patch
+git push --follow-tags
+```
+
+GitHub Actions (`.github/workflows/release.yml`) Windows-ზე ააწყობს exe-ს და Release-ზე დაამაგრებს.
+
+**ლოკალურად აწყობა:** `npm run dist` → ფაილები `release/` საქაღალდეში.
+
 ## Inspect / DevTools
 
 - **F12** ან **Ctrl+Shift+I** (macOS: Cmd+Opt+I)
