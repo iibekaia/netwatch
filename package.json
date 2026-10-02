@@ -62,7 +62,8 @@
     "files": [
       "electron/**/*",
       "dist/netwatch/browser/**/*",
-      "package.json"
+      "package.json",
+      "build/icon.ico"
     ],
     "win": {
       "target": [
@@ -78,7 +79,8 @@
             "x64"
           ]
         }
-      ]
+      ],
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
@@ -87,7 +89,9 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "NetWatch",
-      "artifactName": "NetWatch-Setup.${ext}"
+      "artifactName": "NetWatch-Setup.${ext}",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
     },
     "portable": {
       "artifactName": "NetWatch-Portable.${ext}"

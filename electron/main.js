@@ -71,6 +71,7 @@ function createWindow() {
     minWidth: 400,
     minHeight: 560,
     title: 'NetWatch',
+    icon: path.join(__dirname, '..', 'build', 'icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
