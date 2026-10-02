@@ -3,9 +3,11 @@ import { Icon } from './shared/icon';
 import { ConnectionService } from './core/connection.service';
 import { LanService } from './core/lan.service';
 import { ToastService } from './core/toast.service';
+import { UpdateService } from './core/update.service';
 import { formatDuration, reasonText } from './shared/format';
 import { AppTab, TabNav } from './layout/tab-nav/tab-nav';
 import { Toasts } from './layout/toasts/toasts';
+import { UpdateBanner } from './layout/update-banner/update-banner';
 import { StatusTab } from './features/status/status-tab/status-tab';
 import { LanTab } from './features/lan/lan-tab/lan-tab';
 import { SpeedTab } from './features/speed/speed-tab/speed-tab';
@@ -13,13 +15,14 @@ import { SpeedTab } from './features/speed/speed-tab/speed-tab';
 /** აპის ჩარჩო: header, ტაბები, აქტიური ტაბის შიგთავსი, footer, toast-ები */
 @Component({
   selector: 'app-root',
-  imports: [Icon, TabNav, Toasts, StatusTab, LanTab, SpeedTab],
+  imports: [Icon, TabNav, Toasts, UpdateBanner, StatusTab, LanTab, SpeedTab],
   templateUrl: './app.html',
   host: { class: 'block min-h-screen' },
 })
 export class App {
   protected readonly conn = inject(ConnectionService);
   protected readonly lan = inject(LanService);
+  protected readonly update = inject(UpdateService);
   protected readonly tab = signal<AppTab>('status');
   protected readonly versions = window.netwatch?.versions;
 

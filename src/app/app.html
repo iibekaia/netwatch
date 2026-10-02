@@ -19,6 +19,10 @@
     <!--    }-->
   </header>
 
+  @if (update.hasUpdate()) {
+    <app-update-banner />
+  }
+
   <!-- ქსელი და სიჩქარე მხოლოდ Electron-შია (ბრაუზერში — მხოლოდ კავშირი) -->
   @if (lan.available) {
     <app-tab-nav [(active)]="tab" />
@@ -36,11 +40,34 @@
     }
   }
 
-  <footer class="mt-auto text-center text-[11px] text-muted/70">
+  <footer class="mt-auto flex flex-col items-center gap-1 text-center text-[11px] text-muted/70">
+    @if (update.enabled()) {
+      @let u = update.state()!;
+      <p class="flex items-center gap-1.5">
+        NetWatch {{ u.currentVersion }}
+        @switch (u.status) {
+          @case ('checking') {
+            <span>· მოწმდება…</span>
+          }
+          @case ('up-to-date') {
+            <span>· ბოლო ვერსიაა</span>
+          }
+          @case ('error') {
+            <span class="text-bad/80">· {{ u.error }}</span>
+          }
+        }
+        @if (!update.hasUpdate() && u.status !== 'checking') {
+          <span>·</span>
+          <button class="underline-offset-2 hover:text-text hover:underline" (click)="update.check()">
+            შემოწმება
+          </button>
+        }
+      </p>
+    }
     @if (versions) {
-      Electron {{ versions.electron }} · Chrome {{ versions.chrome }} · Node {{ versions.node }}
+      <p>Electron {{ versions.electron }} · Chrome {{ versions.chrome }} · Node {{ versions.node }}</p>
     } @else {
-      ბრაუზერის რეჟიმი — მხოლოდ navigator.onLine
+      <p>ბრაუზერის რეჟიმი — მხოლოდ navigator.onLine</p>
     }
   </footer>
 </main>

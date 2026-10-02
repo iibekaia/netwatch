@@ -4,6 +4,7 @@ const { ConnectionMonitor } = require('./connection-monitor');
 const lanScanner = require('./lan-scanner');
 const { PeerDiscovery } = require('./peer-discovery');
 const { SpeedTest, providerInfo } = require('./speed-test');
+const { Updater } = require('./updater');
 
 // --dev: Angular იტვირთება ng serve-დან (http://localhost:4200), DevTools ავტომატურად იხსნება
 const isDev = process.argv.includes('--dev');
@@ -13,6 +14,10 @@ const PROD_INDEX = path.join(__dirname, '..', 'dist', 'netwatch', 'browser', 'in
 const monitor = new ConnectionMonitor();
 const peers = new PeerDiscovery({ version: app.getVersion() });
 const speedTest = new SpeedTest();
+const updater = new Updater();
+updater.on('state', (state) => {
+  if (win && !win.isDestroyed()) win.webContents.send('update:state', state);
+});
 let win = null;
 
 // ─────────────────────────────────────────────
@@ -156,6 +161,9 @@ ipcMain.handle('speed:run', async () => {
   }
 });
 ipcMain.on('speed:cancel', () => speedTest.cancel());
+ipcMain.handle('update:get', () => updater.state);
+ipcMain.handle('update:check', () => updater.check());
+ipcMain.on('update:install', () => updater.install());
 ipcMain.on('devtools:toggle', () => win?.webContents.toggleDevTools());
 
 // ─────────────────────────────────────────────
@@ -250,6 +258,7 @@ app.whenReady().then(() => {
   peers.start();
   scanLan();
   loadProvider();
+  updater.start();
 
   // ძილიდან გაღვიძება / ეკრანის განბლოკვა — მაშინვე ვამოწმებთ
   powerMonitor.on('resume', () => {
@@ -268,6 +277,7 @@ app.on('window-all-closed', () => {
   monitor.stop();
   peers.stop();
   speedTest.cancel();
+  updater.stop();
   clearTimeout(lanTimer);
   if (process.platform !== 'darwin') app.quit();
 });

@@ -6,6 +6,7 @@
 #   NetWatch-Setup.exe, NetWatch-Portable.exe   — Windows
 #   NetWatch-mac.dmg                            — macOS (Intel + Apple Silicon)
 #   NetWatch-linux.AppImage                     — Linux
+#   latest.yml, latest-linux.yml, *.blockmap    — ავტომატური განახლებისთვის (აპი ამათ ამოწმებს)
 # ვერსია თუ არ შეცვლილა, აწყობა გამოტოვდება.
 #
 # ასევე იშვება:
@@ -74,18 +75,25 @@ jobs:
       fail-fast: false # ერთის ჩავარდნა დანარჩენებს არ აჩერებს
       matrix:
         include:
+          # *.yml და *.blockmap — ავტომატური განახლებისთვის (electron-updater კითხულობს)
           - name: windows
             os: windows-latest
             script: dist:win
-            files: release/*.exe
+            files: |
+              release/*.exe
+              release/latest.yml
+              release/*.exe.blockmap
           - name: mac
             os: macos-latest
             script: dist:mac
-            files: release/*.dmg
+            files: |
+              release/*.dmg
           - name: linux
             os: ubuntu-latest
             script: dist:linux
-            files: release/*.AppImage
+            files: |
+              release/*.AppImage
+              release/latest-linux.yml
     runs-on: ${{ matrix.os }}
     env:
       # ხელმოწერის სერტიფიკატს არ ვეძებთ — macOS-ზე ad-hoc ხელმოწერა (identity "-")

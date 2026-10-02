@@ -45,6 +45,20 @@ GitHub Actions (`.github/workflows/release.yml`) ნახავს, რომ R
 npm version patch --no-git-tag-version
 ```
 
+### ავტომატური განახლება
+
+აპი გაშვებიდან 10 წამში და შემდეგ ყოველ 6 საათში ამოწმებს GitHub-ის ბოლო Release-ს (`electron/updater.js`). ახალი ვერსია header-ის ქვეშ ბანერად ჩნდება:
+
+| ინსტალაცია | როგორ ახლდება |
+|---|---|
+| Windows: `NetWatch-Setup.exe` | ფონზე იწერება → **გადატვირთვა** (ან დაყენდება აპის შემდეგ დახურვაზე) |
+| Linux: AppImage | ასევე, ავტომატურად |
+| macOS და Windows Portable | ბანერი ღილაკით **გადმოწერა**. Apple ხელმოუწერელ აპს ავტომატურად ვერ აახლებს, portable ფაილს კი ინსტალაცია არ აქვს |
+
+footer-ში ჩანს მიმდინარე ვერსია და ღილაკი „შემოწმება“. dev რეჟიმში (`npm start`) განახლება გამორთულია.
+
+ამისთვის Release-ში `latest.yml` (Windows) და `latest-linux.yml` (Linux) უნდა იყოს. workflow მათ ავტომატურად ტვირთავს. რეპოზიტორია **public** უნდა იყოს, რომ აპმა Release ანგარიშის გარეშე ნახოს.
+
 **ლოკალურად აწყობა** (ფაილები `release/` საქაღალდეში):
 
 ```bash
@@ -119,6 +133,7 @@ electron/
   lan-scanner.js          ლოკალური ქსელის სკანირება (NetBIOS + ARP + DNS)
   peer-discovery.js       NetWatch-ის სხვა ასლების პოვნა (UDP 47821)
   speed-test.js           სიჩქარის ტესტი + პროვაიდერის ინფო
+  updater.js              ავტომატური განახლება (electron-updater / GitHub API)
 
 src/
   styles.css              Tailwind + თემა (ფერები light/dark) + საერთო კლასები
@@ -130,11 +145,13 @@ src/
       lan.service.ts          ქსელის მოწყობილობები
       speed.service.ts        სიჩქარის ტესტი, პროვაიდერი, ისტორია
       toast.service.ts        ამომხტარი შეტყობინებები
+      update.service.ts       აპის განახლების მდგომარეობა
       netwatch.types.ts       window.netwatch API-ის ტიპები
     shared/format.ts      ფორმატირება (ხანგრძლივობა, რიცხვები, netmask)
     layout/
       tab-nav/            ტაბების გადამრთველი
       toasts/             შეტყობინებების ჩვენება
+      update-banner/      ახალი ვერსიის ბანერი
     features/
       status/   status-tab, event-log
       lan/      lan-tab, device-card

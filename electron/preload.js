@@ -20,6 +20,10 @@ contextBridge.exposeInMainWorld('netwatch', {
   runSpeedTest: () => ipcRenderer.invoke('speed:run'),
   cancelSpeedTest: () => ipcRenderer.send('speed:cancel'),
   onSpeedProgress: (callback) => subscribe('speed:progress', callback),
+  getUpdate: () => ipcRenderer.invoke('update:get'),
+  checkUpdate: () => ipcRenderer.invoke('update:check'),
+  installUpdate: () => ipcRenderer.send('update:install'),
+  onUpdate: (callback) => subscribe('update:state', callback),
   toggleDevTools: () => ipcRenderer.send('devtools:toggle'),
   versions: {
     electron: process.versions.electron,

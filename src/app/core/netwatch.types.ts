@@ -87,6 +87,29 @@ export interface SpeedResult {
 
 export type SpeedRunResponse = { ok: true; result: SpeedResult } | { ok: false; error: string };
 
+export type UpdateStatus =
+  | 'disabled'
+  | 'idle'
+  | 'checking'
+  | 'up-to-date'
+  | 'available'
+  | 'downloading'
+  | 'downloaded'
+  | 'error';
+
+export interface UpdateState {
+  status: UpdateStatus;
+  /** auto — ფონზე იწერება და თვითონ დგება; manual — ღილაკი „გადმოწერა“ (macOS, Portable) */
+  mode: 'auto' | 'manual' | null;
+  currentVersion: string;
+  /** ახალი ვერსია */
+  version: string | null;
+  /** გადმოწერის პროგრესი 0..100 */
+  progress: number | null;
+  error: string | null;
+  checkedAt: number | null;
+}
+
 export interface NetwatchApi {
   getStatus(): Promise<NetStatus>;
   checkNow(trigger?: string): Promise<NetStatus>;
@@ -100,6 +123,10 @@ export interface NetwatchApi {
   runSpeedTest(): Promise<SpeedRunResponse>;
   cancelSpeedTest(): void;
   onSpeedProgress(cb: (p: SpeedProgress) => void): () => void;
+  getUpdate(): Promise<UpdateState>;
+  checkUpdate(): Promise<UpdateState>;
+  installUpdate(): void;
+  onUpdate(cb: (s: UpdateState) => void): () => void;
   toggleDevTools(): void;
   versions: { electron: string; chrome: string; node: string };
 }
