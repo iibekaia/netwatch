@@ -1,38 +1,81 @@
 # Windows-ის exe-ს აწყობა და GitHub Release-ზე ატვირთვა.
-# იშვება:
-#   - როცა git-ზე v-ით დაწყებულ თეგს აგზავნი (მაგ. v1.0.0)
-#   - როცა GitHub-ის საიტზე Release-ს ქმნი/აქვეყნებ
-#   - ხელით: Actions → Build Windows → Run workflow (tag-ში მიუთითე, მაგ. v1.0.0)
+#
+# ძირითადი გზა: package.json-ში ცვლი "version"-ს და master-ზე აგზავნი (push).
+# თუ Release v<version> ჯერ არ არსებობს, workflow თვითონ შექმნის თეგს და Release-ს
+# და exe-ს დაამაგრებს. ვერსია თუ არ შეცვლილა, აწყობა გამოტოვდება.
+#
+# ასევე იშვება:
+#   - როცა GitHub-ის საიტზე Release-ს ხელით ქმნი — exe ემაგრება იმ Release-ს
+#   - ხელით: Actions → Build Windows → Run workflow
+#     (tag ცარიელი = package.json-ის ვერსია; ან მიუთითე არსებული, მაგ. v1.0.0)
 name: Build Windows
 
 on:
   push:
-    tags: ['v*']
+    branches: [master]
+    paths: [package.json]
   release:
     types: [published]
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release-ის თეგი, რომელზეც exe დაემაგრება (მაგ. v1.0.0). ცარიელი — მხოლოდ Artifacts'
+        description: 'Release-ის თეგი (მაგ. v1.0.0). ცარიელი — package.json-ის ვერსია'
         required: false
 
 permissions:
   contents: write
 
-# თეგის push-ი და Release-ის გამოქვეყნება ერთდროულად რომ არ ააწყოს ორჯერ
-concurrency:
-  group: build-${{ github.event.release.tag_name || inputs.tag || github.ref_name }}
-  cancel-in-progress: true
-
 jobs:
+  # რომელ ვერსიაზეა საუბარი და საჭიროა თუ არა აწყობა
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.v.outputs.tag }}
+      ref: ${{ steps.v.outputs.ref }}
+      build: ${{ steps.v.outputs.build }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          VERSION_TAG="v$(node -p "require('./package.json').version")"
+          TAG="${RELEASE_TAG:-${INPUT_TAG:-$VERSION_TAG}}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+          # თეგი უკვე არსებობს → კოდს მისგან ვაწყობთ; არა → მიმდინარე commit-იდან (თეგი აქ შეიქმნება)
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "ref=refs/tags/$TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+          # push-ზე: Release უკვე არსებობს → ვერსია არ შეცვლილა, აწყობა არ გვჭირდება
+          if [ "${{ github.event_name }}" = "push" ] && gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::notice::Release $TAG უკვე არსებობს — package.json-ში ვერსია გაზარდე ახალი Release-სთვის"
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::ვაწყობ $TAG"
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
+    needs: version
+    if: needs.version.outputs.build == 'true'
     runs-on: windows-latest
+    # ერთი და იგივე ვერსია ორჯერ პარალელურად არ აეწყოს
+    concurrency:
+      group: build-${{ needs.version.outputs.tag }}
+      cancel-in-progress: false
     env:
-      TAG: ${{ github.event.release.tag_name || inputs.tag || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || '' }}
+      TAG: ${{ needs.version.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ env.TAG || github.ref }}
+          ref: ${{ needs.version.outputs.ref }}
 
       - uses: actions/setup-node@v4
         with:
@@ -47,14 +90,14 @@ jobs:
       # ყოველთვის ინახება Actions-ის გვერდზე (Artifacts)
       - uses: actions/upload-artifact@v4
         with:
-          name: NetWatch-windows
+          name: NetWatch-${{ env.TAG }}
           path: release/*.exe
 
-      # exe-ები ემაგრება Release-ს (თუ არ არსებობს — შეიქმნება)
+      # თეგი თუ არ არსებობს — შეიქმნება ამ commit-ზე; Release — ასევე
       - name: Publish release
-        if: env.TAG != ''
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG }}
+          target_commitish: ${{ github.sha }}
           files: release/*.exe
           generate_release_notes: true

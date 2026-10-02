@@ -19,14 +19,15 @@ npm run dev    # ng serve + Electron, ცვლილებები ცოც�
 
 exe ხელმოწერილი არ არის, ამიტომ Windows SmartScreen გააფრთხილებს: **More info → Run anyway**.
 
-**ახალი ვერსიის გამოშვება:** `package.json`-ში ვერსიას ცვლი და თეგს აგზავნი:
+**ახალი ვერსიის გამოშვება:** `package.json`-ში ცვლი `"version"`-ს (მაგ. `1.0.2` → `1.0.3`), აკეთებ commit-ს და master-ზე push-ს. თეგს ხელით არ ქმნი.
+
+GitHub Actions (`.github/workflows/release.yml`) ნახავს, რომ Release `v1.0.3` ჯერ არ არსებობს. თვითონ შექმნის თეგს და Release-ს, Windows-ზე ააწყობს exe-ს და დაამაგრებს. თუ `package.json` შეიცვალა, მაგრამ ვერსია იგივე დარჩა (მაგ. დაემატა dependency), აწყობა გამოტოვდება.
+
+ვერსიის გაზრდა ბრძანებითაც შეიძლება. `--no-git-tag-version` ნიშნავს, რომ თეგს workflow შექმნის:
 
 ```bash
-npm version patch
-git push --follow-tags
+npm version patch --no-git-tag-version
 ```
-
-GitHub Actions (`.github/workflows/release.yml`) Windows-ზე ააწყობს exe-ს და Release-ზე დაამაგრებს.
 
 **ლოკალურად აწყობა:** `npm run dist` → ფაილები `release/` საქაღალდეში.
 
