@@ -52,7 +52,9 @@
   --color-bad-strong: var(--bad-strong);
   --color-bad-bg: var(--bad-bg);
 
-  --font-sans: system-ui, 'Segoe UI', 'Noto Sans Georgian', sans-serif;
+  /* Noto Sans Georgian (ცვლადი, წონა 100–900) აპშია ჩაშენებული — angular.json → styles,
+     ამიტომ ინტერნეტის გარეშეც იტვირთება */
+  --font-sans: 'Noto Sans Georgian Variable', 'Noto Sans Georgian', system-ui, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
 
   --animate-slide-in: slide-in 0.25s ease-out;
