@@ -1,21 +1,38 @@
 # Windows-ის exe-ს აწყობა და GitHub Release-ზე ატვირთვა.
-# იშვება, როცა git-ზე v-ით დაწყებულ თეგს აგზავნი (მაგ. v1.0.0),
-# ან ხელით: Actions → Build Windows → Run workflow.
+# იშვება:
+#   - როცა git-ზე v-ით დაწყებულ თეგს აგზავნი (მაგ. v1.0.0)
+#   - როცა GitHub-ის საიტზე Release-ს ქმნი/აქვეყნებ
+#   - ხელით: Actions → Build Windows → Run workflow (tag-ში მიუთითე, მაგ. v1.0.0)
 name: Build Windows
 
 on:
   push:
     tags: ['v*']
+  release:
+    types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release-ის თეგი, რომელზეც exe დაემაგრება (მაგ. v1.0.0). ცარიელი — მხოლოდ Artifacts'
+        required: false
 
 permissions:
   contents: write
 
+# თეგის push-ი და Release-ის გამოქვეყნება ერთდროულად რომ არ ააწყოს ორჯერ
+concurrency:
+  group: build-${{ github.event.release.tag_name || inputs.tag || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: windows-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || '' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG || github.ref }}
 
       - uses: actions/setup-node@v4
         with:
@@ -27,16 +44,17 @@ jobs:
       - name: Build exe
         run: npm run dist
 
-      # ყოველთვის ინახება Actions-ის გვერდზე (Artifacts), ხელით გაშვებისასაც
+      # ყოველთვის ინახება Actions-ის გვერდზე (Artifacts)
       - uses: actions/upload-artifact@v4
         with:
           name: NetWatch-windows
           path: release/*.exe
 
-      # თეგზე — იქმნება Release და exe-ები მას ემაგრება
+      # exe-ები ემაგრება Release-ს (თუ არ არსებობს — შეიქმნება)
       - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: env.TAG != ''
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.TAG }}
           files: release/*.exe
           generate_release_notes: true
