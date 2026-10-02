@@ -23,10 +23,6 @@
         >
           <app-icon [name]="n.icon" class="size-[18px]" />
         </span>
-        @if (!last) {
-          <!-- ხაზი შემდეგ რგოლამდე -->
-          <span class="absolute top-1/2 left-1/2 h-0.5 w-full -translate-y-1/2 rounded-full" [class]="n.link"></span>
-        }
       </div>
       <span class="w-full truncate text-[11.5px] font-medium">{{ i18n.t('diag.step.' + n.id) }}</span>
       <span class="h-3.5 text-[10.5px] text-muted tabular-nums">
