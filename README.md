@@ -68,6 +68,19 @@ npm run dist:mac      # macOS (მხოლოდ Mac-ზე)
 npm run dist:linux    # Linux (Linux-ზე ან macOS-ზე)
 ```
 
+## კოდის შემოწმება (ESLint)
+
+```bash
+npm run lint
+```
+
+ამოწმებს მთელ პროექტს ([eslint.config.js](eslint.config.js)):
+- `src/**/*.ts`: TypeScript და Angular-ის წესები (`angular-eslint`)
+- `src/**/*.html`: Angular template-ები და ხელმისაწვდომობა (a11y)
+- `electron/`, `scripts/`: Node.js (CommonJS)
+
+**ყოველი commit-ის წინ ავტომატურად ეშვება** (husky + lint-staged, `.husky/pre-commit`). მოწმდება მხოლოდ შეცვლილი ფაილები. შეცდომის შემთხვევაში commit არ შესრულდება და ჩანს, რა უნდა გასწორდეს. hook-ები `npm install`-ისას თავისით ყენდება (`prepare` სკრიპტი). იგივე შემოწმება GitHub Actions-შიც ეშვება: თუ lint ჩავარდა, Release არ აეწყობა.
+
 ## Inspect / DevTools
 
 - **F12** ან **Ctrl+Shift+I** (macOS: Cmd+Opt+I)

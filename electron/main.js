@@ -355,9 +355,10 @@ function createWindow({show = true} = {}) {
   });
 
   // მარჯვენა ღილაკი → "Inspect Element"
-  win.webContents.on('context-menu', (_event, params) => {
+  // _params — Inspect Element-ის დაბრუნებისას: inspectElement(params.x, params.y)
+  win.webContents.on('context-menu', (_event, _params) => {
     Menu.buildFromTemplate([
-      // { label: 'Inspect Element', click: () => win.webContents.inspectElement(params.x, params.y) },
+      // { label: 'Inspect Element', click: () => win.webContents.inspectElement(_params.x, _params.y) },
       // { label: 'Toggle DevTools', click: () => win.webContents.toggleDevTools() },
       // { type: 'separator' },
       {label: 'Reload', role: 'reload'},

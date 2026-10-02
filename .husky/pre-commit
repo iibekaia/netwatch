@@ -1,0 +1,2 @@
+# commit-მდე: ESLint მხოლოდ შეცვლილ (staged) ფაილებზე — შეცდომისას commit არ შესრულდება
+npx lint-staged

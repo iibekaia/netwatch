@@ -67,9 +67,25 @@ jobs:
             echo "build=true" >> "$GITHUB_OUTPUT"
           fi
 
+  # ESLint — იგივე, რაც commit-ის წინ (husky); შეცდომისას Release არ აეწყობა
+  lint:
+    needs: version
+    if: needs.version.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
   # სამი სისტემა პარალელურად; თითოეული თავის ფაილებს Artifacts-ში ტვირთავს
   build:
-    needs: version
+    needs: [version, lint]
     if: needs.version.outputs.build == 'true'
     strategy:
       fail-fast: false # ერთის ჩავარდნა დანარჩენებს არ აჩერებს

@@ -81,22 +81,26 @@
   <footer class="mt-auto flex flex-col items-center gap-1 text-center text-[11px] text-muted/70">
     @if (autostart.state().supported) {
       <!-- იგივე, რაც tray-ის მენიუში — სინქრონულად -->
-      <label class="mb-1 flex cursor-pointer items-center gap-2 text-xs text-muted">
-        <button
-          type="button"
-          role="switch"
+      <!-- მთელი ხაზი ერთი switch-ღილაკია: ტექსტი მისი სახელია (ეკრანის მკითხველისთვისაც) -->
+      <button
+        type="button"
+        role="switch"
+        class="mb-1 flex items-center gap-2 rounded-full text-xs text-muted transition hover:text-text focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+        [attr.aria-checked]="autostart.state().enabled"
+        (click)="autostart.toggle()"
+      >
+        <span
           class="relative h-[18px] w-8 shrink-0 rounded-full transition-colors"
           [class]="autostart.state().enabled ? 'bg-ok' : 'bg-border'"
-          [attr.aria-checked]="autostart.state().enabled"
-          (click)="autostart.toggle()"
+          aria-hidden="true"
         >
           <span
             class="absolute top-0.5 left-0.5 size-3.5 rounded-full bg-white shadow-sm transition-transform"
             [class]="autostart.state().enabled ? 'translate-x-3.5' : 'translate-x-0'"
           ></span>
-        </button>
+        </span>
         {{ i18n.t('footer.autostart') }}
-      </label>
+      </button>
     }
     @if (update.enabled()) {
       @let u = update.state()!;
