@@ -5,7 +5,8 @@ const {app, BrowserWindow, dialog, ipcMain, Menu, Notification, powerMonitor, sh
 const {ConnectionMonitor} = require('./connection-monitor');
 const lanScanner = require('./lan-scanner');
 const {PeerDiscovery} = require('./peer-discovery');
-const {SpeedTest, providerInfo} = require('./speed-test');
+const {providerInfo} = require('./speed-test');
+const {SpeedTestProcess} = require('./speed-process');
 const {Updater} = require('./updater');
 const {runDiagnostics} = require('./diagnostics');
 const {HistoryStore} = require('./history-store');
@@ -36,7 +37,7 @@ const PROD_INDEX = path.join(__dirname, '..', 'dist', 'netwatch', 'browser', 'in
 
 const monitor = new ConnectionMonitor();
 const peers = new PeerDiscovery({version: app.getVersion()});
-const speedTest = new SpeedTest();
+const speedTest = new SpeedTestProcess(); // ცალკე პროცესში — იხ. speed-process.js
 const updater = new Updater();
 updater.on('state', (state) => {
   if (win && !win.isDestroyed()) win.webContents.send('update:state', state);

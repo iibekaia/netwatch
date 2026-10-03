@@ -211,6 +211,8 @@ npm update oui-data && npm run oui
 
 გაზომვები ბაზაში ინახება (`netwatch.db` → `speed_tests`). ეკრანზე ბოლო 10 ჩანს.
 
+ტესტი **ცალკე პროცესში** ეშვება (Electron `utilityProcess`: `electron/speed-process.js` → `speed-worker.js`). ასე main process-ის სხვა საქმეები (ქსელის სკანი, ბაზა, IPC) ping-ს და ნაკადების კითხვას არ აფერხებს. პროცესი ყოველ ტესტზე იქმნება და ბოლოს იხურება. Web Worker-ი (renderer-ში) არ გამოიყენება, რადგან დამალულ ფანჯარაში (tray) Chromium ტაიმერებს ანელებს, renderer-ის `fetch`-ს კი CORS-ის და Referer-ის შეზღუდვები აქვს.
+
 ## ჰენდლერები
 
 **Main process** (`electron/main.js`): `handleOffline`, `handleOnline`, `handleChange`. სისტემურ შეტყობინებას აჩვენებს, ფანჯრის სათაურს ცვლის და taskbar-ზე ანათებს.
@@ -242,6 +244,8 @@ electron/
   speed-store.js          სიჩქარის გაზომვები ბაზაში
   peer-discovery.js       NetWatch-ის სხვა ასლების პოვნა (UDP 47821)
   speed-test.js           სიჩქარის ტესტი + პროვაიდერის ინფო
+  speed-process.js        სიჩქარის ტესტის გაშვება ცალკე პროცესში (utilityProcess)
+  speed-worker.js         ამ პროცესის შესასვლელი წერტილი
   updater.js              ავტომატური განახლება (electron-updater / GitHub API)
   diagnostics.js          „სად არის პრობლემა?“ — კავშირის ჯაჭვის შემოწმება
   history-store.js        გათიშვების ისტორია (netwatch.db → outages, sessions)
