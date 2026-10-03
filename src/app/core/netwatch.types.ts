@@ -33,6 +33,11 @@ export interface LanDevice {
   randomMac?: boolean;
   /** მწარმოებელი MAC-ით (Apple, Samsung, TP-Link …); შემთხვევით MAC-ზე — null */
   vendor?: string | null;
+  /** ამ სკანირებაში დადასტურდა (false — ადრე ნანახი, ახლა არ პასუხობს) */
+  active: boolean;
+  /** პირველად / ბოლოს ნანახი ამ ქსელში (netwatch.db → devices) */
+  firstSeen?: number | null;
+  lastSeen?: number | null;
   iface?: string;
   /** ამ მოწყობილობაზე NetWatch მუშაობს */
   peer: LanPeer | null;

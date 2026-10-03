@@ -1,9 +1,30 @@
 {
-  "meta": { "native": "Deutsch", "dateLocale": "de" },
-  "lang": { "label": "Sprache" },
-  "status": { "online": "Online", "offline": "Offline", "checking": "Prüfung" },
-  "tabs": { "speed": "Tempo", "status": "Verbindung", "lan": "Netzwerk", "history": "Verlauf", "peers": "NetWatch-Nutzer" },
-  "dur": { "hm": "{h} Std. {m} Min.", "h": "{h} Std.", "ms": "{m} Min. {s} Sek.", "m": "{m} Min.", "s": "{s} Sek." },
+  "meta": {
+    "native": "Deutsch",
+    "dateLocale": "de"
+  },
+  "lang": {
+    "label": "Sprache"
+  },
+  "status": {
+    "online": "Online",
+    "offline": "Offline",
+    "checking": "Prüfung"
+  },
+  "tabs": {
+    "speed": "Tempo",
+    "status": "Verbindung",
+    "lan": "Netzwerk",
+    "history": "Verlauf",
+    "peers": "NetWatch-Nutzer"
+  },
+  "dur": {
+    "hm": "{h} Std. {m} Min.",
+    "h": "{h} Std.",
+    "ms": "{m} Min. {s} Sek.",
+    "m": "{m} Min.",
+    "s": "{s} Sek."
+  },
   "reason": {
     "reachable": "Server antworten",
     "unreachable": "Netzwerk da, Internet nicht",
@@ -36,7 +57,12 @@
     "later": "Später",
     "pending": "Update {version}"
   },
-  "conn": { "onlineFor": "Seit {time} online", "offlineFor": "Seit {time} offline", "checking": "Wird geprüft…", "checkedAt": "geprüft {time}" },
+  "conn": {
+    "onlineFor": "Seit {time} online",
+    "offlineFor": "Seit {time} offline",
+    "checking": "Wird geprüft…",
+    "checkedAt": "geprüft {time}"
+  },
   "diag": {
     "title": "Wo liegt das Problem?",
     "check": "Prüfen",
@@ -44,31 +70,93 @@
     "error": "Fehler",
     "checkedAt": "Geprüft {time}",
     "intro": "Prüfe jedes Glied der Verbindung — fällt das Internet aus, siehst du, wo sie abbricht. Bei einem Ausfall startet die Prüfung automatisch.",
-    "trigger": { "offline": "automatisch, beim Ausfall", "online": "automatisch, bei Wiederherstellung" },
-    "step": { "adapter": "Computer", "router": "Router", "internet": "Internet", "dns": "DNS", "web": "Web" },
+    "trigger": {
+      "offline": "automatisch, beim Ausfall",
+      "online": "automatisch, bei Wiederherstellung"
+    },
+    "step": {
+      "adapter": "Computer",
+      "router": "Router",
+      "internet": "Internet",
+      "dns": "DNS",
+      "web": "Web"
+    },
     "detail": {
-      "adapter": { "ok": "{iface} · {ip}", "dhcp": "Der Router hat keine IP-Adresse vergeben", "off": "Nicht mit einem Netzwerk verbunden" },
-      "router": { "ok": "{ip}", "fail": "{ip} antwortet nicht", "noGateway": "Router-Adresse nicht gefunden", "blocked": "Antwortet nicht auf Prüfungen, aber die Verbindung funktioniert" },
-      "internet": { "ok": "Öffentliche Server erreichbar", "fail": "Öffentliche Server nicht erreichbar" },
-      "dns": { "ok": "Namen werden aufgelöst", "system": "Der System-DNS-Server antwortet nicht", "fail": "DNS nicht erreichbar" },
-      "web": { "ok": "Webseiten öffnen sich", "captive": "WLAN verlangt eine Anmeldung", "fail": "HTTP-Anfrage fehlgeschlagen" },
+      "adapter": {
+        "ok": "{iface} · {ip}",
+        "dhcp": "Der Router hat keine IP-Adresse vergeben",
+        "off": "Nicht mit einem Netzwerk verbunden"
+      },
+      "router": {
+        "ok": "{ip}",
+        "fail": "{ip} antwortet nicht",
+        "noGateway": "Router-Adresse nicht gefunden",
+        "blocked": "Antwortet nicht auf Prüfungen, aber die Verbindung funktioniert"
+      },
+      "internet": {
+        "ok": "Öffentliche Server erreichbar",
+        "fail": "Öffentliche Server nicht erreichbar"
+      },
+      "dns": {
+        "ok": "Namen werden aufgelöst",
+        "system": "Der System-DNS-Server antwortet nicht",
+        "fail": "DNS nicht erreichbar"
+      },
+      "web": {
+        "ok": "Webseiten öffnen sich",
+        "captive": "WLAN verlangt eine Anmeldung",
+        "fail": "HTTP-Anfrage fehlgeschlagen"
+      },
       "skip": "Nicht geprüft"
     },
     "verdict": {
-      "adapter-off": { "title": "Der Computer ist mit keinem Netzwerk verbunden", "advice": "Prüfe, ob WLAN eingeschaltet oder das Kabel eingesteckt ist." },
-      "adapter-dhcp": { "title": "Der Computer ist mit keinem Netzwerk verbunden", "advice": "WLAN/Kabel ist verbunden, aber der Router hat keine Adresse vergeben. Starte den Router neu oder schalte WLAN aus und wieder ein." },
-      "router": { "title": "Der Router antwortet nicht", "advice": "Starte den Router neu (10 Sekunden vom Strom trennen). Im WLAN: näher an den Router gehen." },
-      "internet": { "title": "Das Problem liegt beim Anbieter", "advice": "Der Router funktioniert, aber das Internet kommt nicht bei ihm an. Starte den Router neu; hilft das nicht, wende dich an deinen Anbieter." },
-      "dns-server": { "title": "DNS funktioniert nicht", "advice": "Das Internet ist da, aber dein DNS-Server antwortet nicht. Stelle DNS in den Netzwerkeinstellungen auf 1.1.1.1 oder 8.8.8.8 um." },
-      "dns": { "title": "DNS funktioniert nicht", "advice": "Das Internet ist da, aber Namen werden nicht aufgelöst. Starte den Router neu; evtl. blockiert eine Firewall oder ein VPN das DNS." },
-      "captive": { "title": "WLAN verlangt eine Anmeldung", "advice": "Öffne einen Browser — es erscheint eine Anmeldeseite (Hotel, Café, Büro)." },
-      "web": { "title": "Webseiten öffnen sich nicht", "advice": "Eine Verbindung besteht, aber HTTP wird blockiert. Prüfe VPN, Proxy oder Firewall." },
-      "ok": { "title": "Alles in Ordnung", "advice": "Alle Glieder der Verbindung funktionieren." }
+      "adapter-off": {
+        "title": "Der Computer ist mit keinem Netzwerk verbunden",
+        "advice": "Prüfe, ob WLAN eingeschaltet oder das Kabel eingesteckt ist."
+      },
+      "adapter-dhcp": {
+        "title": "Der Computer ist mit keinem Netzwerk verbunden",
+        "advice": "WLAN/Kabel ist verbunden, aber der Router hat keine Adresse vergeben. Starte den Router neu oder schalte WLAN aus und wieder ein."
+      },
+      "router": {
+        "title": "Der Router antwortet nicht",
+        "advice": "Starte den Router neu (10 Sekunden vom Strom trennen). Im WLAN: näher an den Router gehen."
+      },
+      "internet": {
+        "title": "Das Problem liegt beim Anbieter",
+        "advice": "Der Router funktioniert, aber das Internet kommt nicht bei ihm an. Starte den Router neu; hilft das nicht, wende dich an deinen Anbieter."
+      },
+      "dns-server": {
+        "title": "DNS funktioniert nicht",
+        "advice": "Das Internet ist da, aber dein DNS-Server antwortet nicht. Stelle DNS in den Netzwerkeinstellungen auf 1.1.1.1 oder 8.8.8.8 um."
+      },
+      "dns": {
+        "title": "DNS funktioniert nicht",
+        "advice": "Das Internet ist da, aber Namen werden nicht aufgelöst. Starte den Router neu; evtl. blockiert eine Firewall oder ein VPN das DNS."
+      },
+      "captive": {
+        "title": "WLAN verlangt eine Anmeldung",
+        "advice": "Öffne einen Browser — es erscheint eine Anmeldeseite (Hotel, Café, Büro)."
+      },
+      "web": {
+        "title": "Webseiten öffnen sich nicht",
+        "advice": "Eine Verbindung besteht, aber HTTP wird blockiert. Prüfe VPN, Proxy oder Firewall."
+      },
+      "ok": {
+        "title": "Alles in Ordnung",
+        "advice": "Alle Glieder der Verbindung funktionieren."
+      }
     }
   },
   "lan": {
-    "devices": { "one": "{count} Gerät", "other": "{count} Geräte" },
-    "withNetWatch": { "one": "{count} mit NetWatch", "other": "{count} mit NetWatch" },
+    "devices": {
+      "one": "{count} Gerät",
+      "other": "{count} Geräte"
+    },
+    "withNetWatch": {
+      "one": "{count} mit NetWatch",
+      "other": "{count} mit NetWatch"
+    },
     "scan": "Scannen",
     "scanning": "Scannt…",
     "scanningNetwork": "Netzwerk wird gescannt…",
@@ -80,7 +168,16 @@
     "unknown": "Unbekanntes Gerät",
     "group": "Gruppe: {name}",
     "randomMac": "Zufällige MAC",
-    "nic": "Netzwerkkarte: {vendor}"
+    "nic": "Netzwerkkarte: {vendor}",
+    "filterLabel": "Filter",
+    "filter": {
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "all": "Alle"
+    },
+    "lastSeen": "Zuletzt gesehen {time}",
+    "emptyInactive": "Keine inaktiven Geräte",
+    "inactiveHint": "Inaktiv — früher gesehen, antwortet gerade nicht (aus, im Ruhemodus oder weg)."
   },
   "speed": {
     "provider": "Anbieter",
@@ -95,7 +192,11 @@
     "measure": "Geschwindigkeit messen",
     "again": "Erneut messen",
     "stop": "Stopp · {phase}",
-    "phase": { "ping": "Ping-Messung", "download": "Download", "upload": "Upload" },
+    "phase": {
+      "ping": "Ping-Messung",
+      "download": "Download",
+      "upload": "Upload"
+    },
     "verdict": {
       "excellent": "Ausgezeichnet — 4K-Video, Gaming und große Dateien problemlos.",
       "good": "Gut — HD-Video, Videoanrufe und Gaming laufen normal.",
@@ -109,8 +210,18 @@
   },
   "history": {
     "period": "Zeitraum",
-    "periods": { "today": "Heute", "week": "7 Tage", "month": "30 Tage", "thisMonth": "Dieser Monat" },
-    "when": { "today": "Heute", "week": "In den letzten 7 Tagen", "month": "In den letzten 30 Tagen", "thisMonth": "In diesem Monat" },
+    "periods": {
+      "today": "Heute",
+      "week": "7 Tage",
+      "month": "30 Tage",
+      "thisMonth": "Dieser Monat"
+    },
+    "when": {
+      "today": "Heute",
+      "week": "In den letzten 7 Tagen",
+      "month": "In den letzten 30 Tagen",
+      "thisMonth": "In diesem Monat"
+    },
     "sentenceNone": "{when} ist das Internet nicht ausgefallen.",
     "sentence": {
       "one": "{when} ist das Internet {count}-mal ausgefallen, insgesamt {total}.",
@@ -118,7 +229,10 @@
     },
     "uptime": "Uptime",
     "outages": "Ausfälle",
-    "providerSide": { "one": "{count} beim Anbieter", "other": "{count} beim Anbieter" },
+    "providerSide": {
+      "one": "{count} beim Anbieter",
+      "other": "{count} beim Anbieter"
+    },
     "totalOffline": "Insgesamt offline",
     "longest": "Längster",
     "chartTitle": "Offline-Zeit pro Tag",
@@ -138,10 +252,19 @@
     "chart": {
       "noData": "NetWatch lief nicht",
       "none": "Keine Ausfälle",
-      "offline": { "one": "Offline {time} · {count}-mal", "other": "Offline {time} · {count}-mal" }
+      "offline": {
+        "one": "Offline {time} · {count}-mal",
+        "other": "Offline {time} · {count}-mal"
+      }
     }
   },
-  "tray": { "open": "Öffnen", "check": "Jetzt prüfen", "autostart": "Mit dem Computer starten", "quit": "Beenden", "checkingCause": "Ursache wird geprüft…" },
+  "tray": {
+    "open": "Öffnen",
+    "check": "Jetzt prüfen",
+    "autostart": "Mit dem Computer starten",
+    "quit": "Beenden",
+    "checkingCause": "Ursache wird geprüft…"
+  },
   "notify": {
     "offline": "Internet getrennt",
     "offlineCause": "Internet getrennt — {cause}",
@@ -151,8 +274,14 @@
     "bgTitle": "NetWatch läuft im Hintergrund",
     "bgBody": "Das Internet wird weiter geprüft. Öffnen oder beenden — über das Symbol neben der Uhr."
   },
-  "window": { "online": "NetWatch — online", "offline": "NetWatch — offline" },
-  "dialog": { "savePdf": "Bericht speichern (PDF)", "saveCsv": "Verlauf speichern (CSV)" },
+  "window": {
+    "online": "NetWatch — online",
+    "offline": "NetWatch — offline"
+  },
+  "dialog": {
+    "savePdf": "Bericht speichern (PDF)",
+    "saveCsv": "Verlauf speichern (CSV)"
+  },
   "report": {
     "title": "Bericht zur Internetverbindung",
     "period": "Zeitraum",
@@ -166,10 +295,22 @@
       "other": "In diesem Zeitraum ist das Internet <b>{count}-mal ausgefallen</b>, insgesamt <b>{total}</b>."
     },
     "providerPart": " Davon <b>{count}</b> beim Anbieter (Router funktionierte, Internet nicht).",
-    "stats": { "uptime": "Uptime", "outages": "Ausfälle", "total": "Offline-Zeit gesamt", "longest": "Längster Ausfall", "average": "Durchschnittliche Dauer", "monitored": "Überwachungszeit" },
+    "stats": {
+      "uptime": "Uptime",
+      "outages": "Ausfälle",
+      "total": "Offline-Zeit gesamt",
+      "longest": "Längster Ausfall",
+      "average": "Durchschnittliche Dauer",
+      "monitored": "Überwachungszeit"
+    },
     "chartTitle": "Offline-Zeit pro Tag (Minuten)",
     "listTitle": "Ausfälle ({count})",
-    "col": { "start": "Beginn", "end": "Ende", "duration": "Dauer", "cause": "Ursache / Diagnose" },
+    "col": {
+      "start": "Beginn",
+      "end": "Ende",
+      "duration": "Dauer",
+      "cause": "Ursache / Diagnose"
+    },
     "ongoing": "dauert an",
     "noneList": "Keine Ausfälle erfasst.",
     "note": "Die Uptime wird nur für die Laufzeit von NetWatch berechnet ({time}); Zeit, in der der Computer aus war oder schlief, zählt nicht. Das Internet wird alle 1–2 Sekunden gegen mehrere öffentliche Server geprüft. Die Diagnose prüft Router, öffentliche IPs (1.1.1.1, 8.8.8.8), DNS und HTTP.",

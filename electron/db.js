@@ -10,6 +10,7 @@ const path = require('path');
  *   sessions    (start, end)                          — როდის მუშაობდა NetWatch (uptime-ისთვის)
  *   outages     (start, end, reason, cause, failed_at, unknown_end)
  *   speed_tests (at, ping, jitter, download, upload)
+ *   devices     (network, mac, ip, hostname, vendor …, first_seen, last_seen) — ქსელის მოწყობილობები
  *
  * სქემის ვერსია — PRAGMA user_version; ახალი ცვლილებები MIGRATIONS-ში ემატება (რიგით).
  * მწარმოებლების ბაზა (oui.db) ცალკეა: ის აპს მიჰყვება და მხოლოდ წასაკითხია.
@@ -36,6 +37,24 @@ const MIGRATIONS = [
      ping REAL, jitter REAL, download REAL, upload REAL
    );
    CREATE INDEX speed_tests_at ON speed_tests (at);`,
+
+  // 2 — ქსელის მოწყობილობები: "არააქტიური" = ადრე ნანახი, ახლა არ პასუხობს.
+  // network — როუტერის MAC: ლეპტოპი სახლში/ოფისში — ყოველ ქსელს თავისი სია
+  `CREATE TABLE devices (
+     network TEXT NOT NULL,
+     mac TEXT NOT NULL,
+     ip TEXT,
+     hostname TEXT,
+     netbios TEXT,
+     workgroup TEXT,
+     vendor TEXT,
+     random_mac INTEGER NOT NULL DEFAULT 0,
+     gateway INTEGER NOT NULL DEFAULT 0,
+     first_seen INTEGER NOT NULL,
+     last_seen INTEGER NOT NULL,
+     PRIMARY KEY (network, mac)
+   ) WITHOUT ROWID;
+   CREATE INDEX devices_last_seen ON devices (network, last_seen);`,
 ];
 
 function openDatabase(dir) {

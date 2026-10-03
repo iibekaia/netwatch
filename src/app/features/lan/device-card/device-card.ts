@@ -39,6 +39,8 @@ const CHIP_MAKERS = new Set(['Intel', 'Realtek', 'Foxconn', 'AzureWave', 'Lite-O
   host: {
     class: 'grid animate-fade-in grid-cols-[auto_1fr] items-center gap-3 px-4 py-3',
     '[class.bg-ok/5]': '!!device().peer',
+    // არააქტიური — მკრთალად (ადრე ნანახი, ახლა არ პასუხობს)
+    '[class.opacity-55]': '!device().active',
   },
 })
 export class DeviceCard {

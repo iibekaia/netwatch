@@ -33,4 +33,10 @@
   @if (extra()) {
     <div class="truncate text-xs text-muted">{{ extra() }}</div>
   }
+  @if (!d.active && d.lastSeen) {
+    <div class="flex items-center gap-1.5 text-xs text-muted">
+      <span class="size-1.5 rounded-full bg-muted/50" aria-hidden="true"></span>
+      {{ i18n.t('lan.lastSeen', { time: i18n.date(d.lastSeen, 'dayTime') }) }}
+    </div>
+  }
 </div>

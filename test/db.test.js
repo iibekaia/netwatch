@@ -7,6 +7,7 @@ const { openDatabase } = require('../electron/db');
 const { Settings } = require('../electron/settings');
 const { HistoryStore } = require('../electron/history-store');
 const { SpeedStore } = require('../electron/speed-store');
+const { DeviceStore } = require('../electron/device-store');
 
 /** ცალკე დროებითი საქაღალდე ყოველ ტესტზე — რეალურ მონაცემებს არ ეხება */
 function tempDir(t) {
@@ -18,7 +19,7 @@ function tempDir(t) {
 test('ახალი ბაზა: სქემა იქმნება, ვერსია = მიგრაციების რაოდენობა', (t) => {
   const db = openDatabase(tempDir(t));
   const tables = db.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name`).all().map((r) => r.name);
-  assert.deepEqual(tables, ['outages', 'sessions', 'settings', 'speed_tests']);
+  assert.deepEqual(tables, ['devices', 'outages', 'sessions', 'settings', 'speed_tests']);
   assert.ok(db.prepare('PRAGMA user_version').get().user_version >= 1);
   db.close();
 });
@@ -98,5 +99,36 @@ test('SpeedStore: ძველი localStorage-ის იმპორტი მ�
   assert.equal(s.importLegacy(legacy), 0, 'მეორედ აღარ უნდა ჩაიწეროს');
   s.add({ at: 3000, ping: 39, jitter: 1, download: 100, upload: 90 });
   assert.deepEqual(s.list(10).map((r) => r.at), [3000, 2000, 1000]);
+  db.close();
+});
+
+test('DeviceStore: აქტიურები იწერება, არააქტიურს last_seen რჩება; ქსელები ცალ-ცალკეა', (t) => {
+  const db = openDatabase(tempDir(t));
+  const store = new DeviceStore(db);
+  const home = '48:55:41:73:87:78';
+  const office = 'aa:bb:cc:00:00:01';
+
+  store.record(home, [
+    { ip: '192.168.1.10', mac: '11:11:11:11:11:11', hostname: 'laptop', vendor: 'Intel', active: true },
+    { ip: '192.168.1.20', mac: '22:22:22:22:22:22', hostname: 'phone', active: true },
+    { ip: '192.168.1.30', mac: '33:33:33:33:33:33', active: false }, // ჯერ არასდროს ნანახი აქტიურად — არ იწერება
+    { ip: '192.168.1.2', mac: '44:44:44:44:44:44', self: true, active: true }, // ეს კომპიუტერი — არ იწერება
+  ], 1000);
+
+  // მეორე სკანირება: phone წავიდა (inactive), laptop-მა სახელი ამჯერად ვერ თქვა
+  store.record(home, [
+    { ip: '192.168.1.10', mac: '11:11:11:11:11:11', hostname: null, active: true },
+    { ip: '192.168.1.20', mac: '22:22:22:22:22:22', active: false },
+  ], 2000);
+
+  const list = store.list(home);
+  assert.deepEqual(list.map((d) => d.mac), ['11:11:11:11:11:11', '22:22:22:22:22:22']); // ბოლოს ნანახი — თავში
+  const laptop = list.find((d) => d.hostname === 'laptop');
+  assert.equal(laptop.lastSeen, 2000);
+  assert.equal(laptop.firstSeen, 1000);
+  assert.equal(laptop.vendor, 'Intel', 'ძველი სახელი/მწარმოებელი არ უნდა წაიშალოს');
+  assert.equal(list.find((d) => d.hostname === 'phone').lastSeen, 1000, 'არააქტიურის last_seen არ იცვლება');
+
+  assert.deepEqual(store.list(office), [], 'სხვა ქსელის მოწყობილობები არ ერევა');
   db.close();
 });

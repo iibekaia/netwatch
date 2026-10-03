@@ -1,7 +1,10 @@
+@let c = lan.counts();
+
 <div class="flex items-end justify-between gap-3 px-1">
   <div class="min-w-0">
+    <!-- სათაურში — აქტიური მოწყობილობები (ამ წუთში ქსელში) -->
     <p class="text-[15px] font-medium">
-      {{ i18n.t('lan.devices', { count: lan.devices().length }) }}
+      {{ i18n.t('lan.devices', { count: c.active }) }}
       @if (lan.peerCount()) {
         <span class="text-muted"> · </span>
         <span class="text-ok">{{ i18n.t('lan.withNetWatch', { count: lan.peerCount() }) }}</span>
@@ -22,19 +25,49 @@
   </button>
 </div>
 
+<!-- ფილტრი: აქტიური (ნაგულისხმევი) / არააქტიური / ყველა -->
+<label class="relative self-start">
+  <span class="sr-only">{{ i18n.t('lan.filterLabel') }}</span>
+  <select
+    class="h-8 cursor-pointer appearance-none rounded-lg bg-card py-0 pr-8 pl-3 text-[13px] font-medium shadow-soft ring-1 ring-border transition outline-none hover:ring-muted/40 focus-visible:ring-2 focus-visible:ring-accent"
+    [value]="lan.filter()"
+    (change)="setFilter($event)"
+  >
+    @for (f of filters; track f) {
+      <option [value]="f" [selected]="f === lan.filter()">{{ i18n.t('lan.filter.' + f) }} ({{ c[f] }})</option>
+    }
+  </select>
+  <svg class="pointer-events-none absolute top-1/2 right-2.5 size-3.5 -translate-y-1/2 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+</label>
+
 @if (lan.devices().length) {
   <ul class="card divide-y divide-border overflow-hidden p-0">
-    @for (d of lan.devices(); track d.ip) {
+    <!-- არააქტიურის ძველი IP შეიძლება აქტიურს უკვე ეკავოს (DHCP) — ამიტომ MAC + IP -->
+    @for (d of lan.devices(); track (d.mac ?? '') + d.ip) {
       <li><app-device-card [device]="d" /></li>
     }
   </ul>
 } @else {
   <p class="empty-state">
-    {{ i18n.t(lan.scanning() ? 'lan.scanningNetwork' : 'lan.empty') }}
+    @switch (lan.filter()) {
+      @case ('inactive') {
+        {{ i18n.t('lan.emptyInactive') }}
+      }
+      @default {
+        {{ i18n.t(lan.scanning() ? 'lan.scanningNetwork' : 'lan.empty') }}
+      }
+    }
   </p>
 }
 
-<p class="flex items-center justify-center gap-1.5 text-[11px] text-muted">
-  <span class="size-1.5 rounded-full bg-ok"></span>
-  {{ i18n.t('lan.hint') }}
-</p>
+<div class="flex flex-col items-center gap-1 text-center text-[11px] text-muted">
+  <p class="flex items-center gap-1.5">
+    <span class="size-1.5 rounded-full bg-ok"></span>
+    {{ i18n.t('lan.hint') }}
+  </p>
+  @if (lan.filter() !== 'active') {
+    <p>{{ i18n.t('lan.inactiveHint') }}</p>
+  }
+</div>

@@ -1,10 +1,16 @@
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { LanDevice, LanState } from './netwatch.types';
 
+export type LanFilter = 'active' | 'inactive' | 'all';
+export const LAN_FILTERS: LanFilter[] = ['active', 'inactive', 'all'];
+
 /**
  * ლოკალური ქსელის მოწყობილობები (Angular).
  * სკანირება main process-ში ხდება ავტომატურად (გაშვებისას და ყოველ წუთში);
- * ეს სერვისი მხოლოდ შედეგს იღებს და ალაგებს.
+ * ეს სერვისი მხოლოდ შედეგს იღებს, ფილტრავს და ალაგებს.
+ *
+ *  აქტიური    — ამ სკანირებაში დადასტურდა (ARP-ზე უპასუხა)
+ *  არააქტიური — ამ ქსელში ადრე ნანახი, ახლა არ პასუხობს (გათიშულია, ძინავს, წავიდა)
  */
 @Injectable({ providedIn: 'root' })
 export class LanService {
@@ -15,14 +21,35 @@ export class LanService {
   readonly state = this._state.asReadonly();
   readonly scanning = computed(() => this._state()?.scanning ?? false);
 
-  /** თანმიმდევრობა: ეს კომპიუტერი, როუტერი, NetWatch-ის მომხმარებლები, დანარჩენი IP-ით */
-  readonly devices = computed(() =>
-    [...(this._state()?.devices ?? [])].sort(
-      (a, b) => rank(a) - rank(b) || ipNum(a.ip) - ipNum(b.ip)
-    )
+  /** სიის ფილტრი — ნაგულისხმევად აქტიურები */
+  readonly filter = signal<LanFilter>('active');
+
+  /**
+   * თანმიმდევრობა: აქტიურები (ეს კომპიუტერი, როუტერი, NetWatch-ის მომხმარებლები, დანარჩენი IP-ით),
+   * მერე არააქტიურები — ბოლოს ნანახი თავში.
+   */
+  private readonly all = computed(() =>
+    [...(this._state()?.devices ?? [])].sort((a, b) => {
+      if (a.active !== b.active) return a.active ? -1 : 1;
+      if (!a.active) return (b.lastSeen ?? 0) - (a.lastSeen ?? 0);
+      return rank(a) - rank(b) || ipNum(a.ip) - ipNum(b.ip);
+    })
   );
-  /** NetWatch-ის მომხმარებლები სხვა კომპიუტრებზე */
-  readonly peerCount = computed(() => this.devices().filter((d) => d.peer && !d.self).length);
+
+  readonly counts = computed(() => {
+    const all = this.all();
+    const active = all.filter((d) => d.active).length;
+    return { active, inactive: all.length - active, all: all.length };
+  });
+
+  /** ფილტრის მიხედვით */
+  readonly devices = computed(() => {
+    const f = this.filter();
+    return this.all().filter((d) => f === 'all' || d.active === (f === 'active'));
+  });
+
+  /** NetWatch-ის მომხმარებლები სხვა კომპიუტრებზე (მხოლოდ აქტიურები) */
+  readonly peerCount = computed(() => this.all().filter((d) => d.active && d.peer && !d.self).length);
 
   constructor() {
     if (!this.api) return;

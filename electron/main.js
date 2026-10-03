@@ -16,6 +16,7 @@ const {AppTray} = require('./tray');
 const {Settings} = require('./settings');
 const {openDatabase} = require('./db');
 const {SpeedStore} = require('./speed-store');
+const {DeviceStore} = require('./device-store');
 const {i18n, SUPPORTED, LOCALES} = require('./i18n');
 
 // ერთი ასლი: NetWatch-ს თუ ხელახლა გაუშვებენ (ან ავტომატურ ჩართვასთან ერთად) —
@@ -47,6 +48,7 @@ let tray = null;
 const db = openDatabase(app.getPath('userData'));
 const settings = new Settings(db);
 const speedStore = new SpeedStore(db);
+const deviceStore = new DeviceStore(db);
 
 // ენა: შენახული არჩევანი, ან — რეგიონის/სისტემის მიხედვით (electron/i18n.js)
 // ready-მდე app.getPreferredSystemLanguages() შეიძლება ცარიელი იყოს — init ხელახლა whenReady-ში
@@ -163,14 +165,33 @@ let lanScan = null; // ბოლო სკანირების შედე�
 let lanScanning = null; // მიმდინარე სკანირების Promise
 let lanTimer = null;
 
+/** ქსელის იდენტიფიკატორი — როუტერის MAC (სახლი/ოფისი — თავ-თავისი მოწყობილობები) */
+function networkId(scan) {
+  return scan?.devices.find((d) => d.gateway)?.mac ?? null;
+}
+
 function lanState() {
   const peerList = peers.list();
   const byIp = new Map();
   for (const p of peerList) for (const ip of p.addresses) if (!byIp.has(ip)) byIp.set(ip, p);
-  const devices = (lanScan?.devices ?? []).map((d) => ({...d, peer: byIp.get(d.ip) ?? null}));
+
+  // აქტიური — ამ სკანირებაში დადასტურებული; არააქტიური — ადრე ნანახი ამ ქსელში (ბაზიდან)
+  const known = new Map(deviceStore.list(networkId(lanScan)).map((d) => [d.mac, d]));
+  const devices = (lanScan?.devices ?? [])
+    .filter((d) => d.active)
+    .map((d) => ({
+      ...d,
+      firstSeen: known.get(d.mac)?.firstSeen ?? null,
+      lastSeen: Date.now(),
+      peer: byIp.get(d.ip) ?? null,
+    }));
+  const activeMacs = new Set(devices.map((d) => d.mac));
+  for (const d of known.values()) {
+    if (!activeMacs.has(d.mac)) devices.push({...d, active: false, peer: null});
+  }
   // NetWatch-მა უპასუხა, მაგრამ სკანირებაში არ ჩანს (მაგ. სხვა subnet-იდან)
   for (const p of peerList) {
-    if (!devices.some((d) => d.peer?.id === p.id)) devices.push({ip: p.ip, mac: null, peer: p});
+    if (!devices.some((d) => d.peer?.id === p.id)) devices.push({ip: p.ip, mac: null, active: true, peer: p});
   }
   return {
     scanning: !!lanScanning,
@@ -190,7 +211,10 @@ function scanLan() {
   if (lanScanning) return lanScanning;
   lanScanning = lanScanner
     .scan({onProbe: (ip) => peers.probe(ip)})
-    .then((result) => (lanScan = result))
+    .then((result) => {
+      lanScan = result;
+      deviceStore.record(networkId(result), result.devices);
+    })
     .catch((err) => console.warn('[lan] scan failed', err))
     .finally(() => {
       lanScanning = null;

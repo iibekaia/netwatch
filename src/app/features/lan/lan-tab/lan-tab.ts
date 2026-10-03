@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { LanService } from '../../../core/lan.service';
+import { LAN_FILTERS, LanFilter, LanService } from '../../../core/lan.service';
 import { netmaskPrefix } from '../../../shared/format';
 import { DeviceCard } from '../device-card/device-card';
 import { Icon } from '../../../shared/icon';
@@ -16,4 +16,9 @@ export class LanTab {
   protected readonly lan = inject(LanService);
   protected readonly i18n = inject(I18nService);
   protected readonly prefix = netmaskPrefix;
+  protected readonly filters = LAN_FILTERS;
+
+  protected setFilter(event: Event): void {
+    this.lan.filter.set((event.target as HTMLSelectElement).value as LanFilter);
+  }
 }

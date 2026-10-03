@@ -22,6 +22,12 @@ const { vendorOf } = require('./vendor');
 
 const MAX_HOSTS = 254;
 
+// მეზობლის (ARP) სტატუსი — სისტემის ენისგან დამოუკიდებელი სახელები (Windows enum / Linux ip neigh)
+const ACTIVE = new Set(['reachable', 'permanent']);
+const UNCERTAIN = new Set(['stale', 'delay', 'probe']);
+// Windows: Delay-დან Probe-მდე ~5 წამი, მერე Reachable ან Unreachable
+const RECHECK_MS = 6000;
+
 /** ჩვენი IPv4 ქსელები: [{ iface, address, netmask, mac, network, broadcast, hosts[] }] */
 function localSubnets() {
   const result = [];
@@ -63,6 +69,21 @@ async function scan({ onProbe } = {}) {
 
   const [arp, gateway] = await Promise.all([readArp(), defaultGateway()]);
 
+  // აქტიურობა: ARP ცხრილში ჩანაწერი რამდენიმე წუთი რჩება მოწყობილობის წასვლის შემდეგაც —
+  // ამიტომ ვამოწმებთ სისტემის სტატუსს. Reachable — ახლახან დადასტურდა (ARP-ზე პასუხი firewall-ით
+  // არ იბლოკება); Stale/Delay/Probe — ჯერ გაურკვეველია: სისტემა თვითონ გადაამოწმებს
+  // რამდენიმე წამში, ჩვენ ერთხელ ხელახლა წავიკითხავთ.
+  let states = await neighborStates();
+  const inScan = (ip) => subnets.some((s) => sameSubnet(ip, s));
+  const pending = (ip) => UNCERTAIN.has(states.get(ip));
+  // მხოლოდ ამ ქსელის ჩანაწერები (VPN/ვირტუალური ადაპტერები ხელახალ შემოწმებას არ იწვევს)
+  if (states && arp.some((e) => inScan(e.ip) && pending(e.ip))) {
+    await delay(RECHECK_MS);
+    states = (await neighborStates()) ?? states;
+  }
+  // macOS-ზე სტატუსი არ ჩანს (null) — მაშინ ARP-ის ჩანაწერი აქტიურად ითვლება (როგორც ადრე)
+  const isActive = (ip) => netbios.has(ip) || !states || ACTIVE.has(states.get(ip));
+
   const devices = new Map();
   const inSubnet = (ip) => subnets.some((s) => sameSubnet(ip, s));
 
@@ -91,6 +112,7 @@ async function scan({ onProbe } = {}) {
       if (d.self) d.hostname = os.hostname();
       else d.hostname = await reverseDns(d.ip);
       d.gateway = d.ip === gateway;
+      d.active = d.self || isActive(d.ip);
       d.randomMac = isRandomMac(d.mac);
       d.vendor = vendorOf(d.mac); // Apple, Samsung, TP-Link … (ოფლაინ ბაზა)
     })
@@ -206,6 +228,38 @@ async function readProcArp() {
     entries.push({ ip, mac });
   }
   return entries;
+}
+
+/**
+ * IP → მეზობლის სტატუსი (reachable, stale, delay, probe, unreachable, incomplete, permanent).
+ *   Windows: Get-NetNeighbor (State — enum, სისტემის ენაზე არ ითარგმნება)
+ *   Linux:   ip -4 neigh ("192.168.1.1 dev wlan0 lladdr … REACHABLE")
+ *   macOS:   სტატუსი არ ჩანს — null (აქტიურობა ARP-ის ჩანაწერით ფასდება)
+ */
+async function neighborStates() {
+  let out = '';
+  let re;
+  if (process.platform === 'win32') {
+    out = await run('powershell', [
+      '-NoProfile',
+      '-NonInteractive',
+      '-Command',
+      'Get-NetNeighbor -AddressFamily IPv4 -ErrorAction SilentlyContinue | ForEach-Object { "$($_.IPAddress) $($_.State)" }',
+    ]);
+    re = /^(\d{1,3}(?:\.\d{1,3}){3})\s+(\w+)\s*$/;
+  } else if (process.platform === 'linux') {
+    out = await run('ip', ['-4', 'neigh', 'show']);
+    re = /^(\d{1,3}(?:\.\d{1,3}){3})\s.*\s([A-Z]+)\s*$/;
+  } else {
+    return null;
+  }
+  const map = new Map();
+  for (const line of out.split(/\r?\n/)) {
+    const m = line.trim().match(re);
+    if (m) map.set(m[1], m[2].toLowerCase());
+  }
+  // ბრძანება ვერ გაეშვა (ან ცარიელი შედეგი) — სტატუსი უცნობია, ძველ ქცევაზე ვრჩებით
+  return map.size ? map : null;
 }
 
 async function defaultGateway() {
