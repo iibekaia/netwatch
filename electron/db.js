@@ -39,8 +39,9 @@ const MIGRATIONS = [
    CREATE INDEX speed_tests_at ON speed_tests (at);`,
 
   // 2 — ქსელის მოწყობილობები: "არააქტიური" = ადრე ნანახი, ახლა არ პასუხობს.
+  // IF NOT EXISTS: 1.1.6-მდე ვერსიები user_version-ს ამცირებდნენ (2 → 1), ცხრილი კი რჩებოდა
   // network — როუტერის MAC: ლეპტოპი სახლში/ოფისში — ყოველ ქსელს თავისი სია
-  `CREATE TABLE devices (
+  `CREATE TABLE IF NOT EXISTS devices (
      network TEXT NOT NULL,
      mac TEXT NOT NULL,
      ip TEXT,
@@ -54,7 +55,7 @@ const MIGRATIONS = [
      last_seen INTEGER NOT NULL,
      PRIMARY KEY (network, mac)
    ) WITHOUT ROWID;
-   CREATE INDEX devices_last_seen ON devices (network, last_seen);`,
+   CREATE INDEX IF NOT EXISTS devices_last_seen ON devices (network, last_seen);`,
 ];
 
 function openDatabase(dir) {
@@ -67,14 +68,16 @@ function openDatabase(dir) {
   return db;
 }
 
-function migrate(db, dir) {
+function migrate(db, dir, migrations = MIGRATIONS) {
   // BEGIN IMMEDIATE — თუ ორი ასლი ერთდროულად გაეშვა, მიგრაცია მხოლოდ ერთხელ შესრულდება
   db.exec('BEGIN IMMEDIATE');
   try {
-    let version = db.prepare('PRAGMA user_version').get().user_version;
-    const fresh = version === 0;
-    for (; version < MIGRATIONS.length; version++) db.exec(MIGRATIONS[version]);
-    db.exec(`PRAGMA user_version = ${MIGRATIONS.length}`);
+    const current = db.prepare('PRAGMA user_version').get().user_version;
+    const fresh = current === 0;
+    for (let v = current; v < migrations.length; v++) db.exec(migrations[v]);
+    // ბაზა აპზე ახალი სქემისაა (ძველი ვერსია გაეშვა ახლის შემდეგ) — ვერსიას არ ვამცირებთ,
+    // თორემ ახალი ვერსია შემდეგ გაშვებაზე იმავე მიგრაციას ხელახლა გაუშვებდა
+    if (current < migrations.length) db.exec(`PRAGMA user_version = ${migrations.length}`);
     if (fresh) importLegacyFiles(db, dir);
     db.exec('COMMIT');
   } catch (err) {
@@ -125,4 +128,4 @@ function backup(dir, name) {
   }
 }
 
-module.exports = { openDatabase };
+module.exports = { openDatabase, migrate };

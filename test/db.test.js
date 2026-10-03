@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { openDatabase } = require('../electron/db');
+const { openDatabase, migrate } = require('../electron/db');
 const { Settings } = require('../electron/settings');
 const { HistoryStore } = require('../electron/history-store');
 const { SpeedStore } = require('../electron/speed-store');
@@ -21,6 +21,25 @@ test('ახალი ბაზა: სქემა იქმნება, ვ�
   const tables = db.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name`).all().map((r) => r.name);
   assert.deepEqual(tables, ['devices', 'outages', 'sessions', 'settings', 'speed_tests']);
   assert.ok(db.prepare('PRAGMA user_version').get().user_version >= 1);
+  db.close();
+});
+
+test('ძველი ვერსიის გაშვება ახალი სქემის ბაზაზე user_version-ს არ ამცირებს', (t) => {
+  const dir = tempDir(t);
+  const db = openDatabase(dir);
+  const latest = db.prepare('PRAGMA user_version').get().user_version;
+  migrate(db, dir, ['CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);']); // "ძველი აპი" — 1 მიგრაცია
+  assert.equal(db.prepare('PRAGMA user_version').get().user_version, latest);
+  db.close();
+});
+
+test('ვერსია შემცირებულია, ცხრილი კი არსებობს (1.1.6-მდე ბაგი) — ბაზა მაინც იხსნება', (t) => {
+  const dir = tempDir(t);
+  let db = openDatabase(dir);
+  db.exec('PRAGMA user_version = 1'); // devices უკვე არსებობს
+  db.close();
+  db = openDatabase(dir); // ადრე: "table devices already exists"
+  assert.ok(db.prepare('PRAGMA user_version').get().user_version >= 2);
   db.close();
 });
 
